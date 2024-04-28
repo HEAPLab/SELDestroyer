@@ -3,6 +3,8 @@ project(libseldestroyer)
 
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 
+set(CMAKE_BUILD_TYPE Debug)
+
 set(LIBSELDESTROYER_VERSION_MAJOR 0)
 set(LIBSELDESTROYER_VERSION_MINOR 1)
 set(LIBSELDESTROYER_VERSION_PATCH 1)
@@ -22,6 +24,8 @@ add_library(seldestroyer SHARED
   ${LIBSELDESTROYER_VERSION_HEADER}
   ${FOOLIB_SOURCE_FILES}
 )
+
+target_compile_options(seldestroyer PRIVATE -Wall -Wextra -Wpedantic -Werror)
 
 install(TARGETS seldestroyer
         EXPORT seldestroyer-targets

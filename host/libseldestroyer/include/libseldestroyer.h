@@ -17,6 +17,7 @@
 #ifndef LIBSELDESTROYER_H_
 #define LIBSELDESTROYER_H_
 
+#include <stdbool.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,14 +25,19 @@ extern "C" {
 
 typedef enum lsd_return_val_s {
     LSD_OK = 0,
-    LSD_GENERIC_ERROR = 1
+    LSD_GENERIC_ERROR = 1,
+    LSD_UNABLE_TO_CONNECT = 2
 } lsd_return_val_t;
 
 typedef void * lsd_obj_t;
 
 lsd_obj_t lsd_init(void);
 
+void lsd_debug_mode(bool is_enabled);
+
 void lsd_close(lsd_obj_t session);
+
+const char *lsd_get_error(lsd_obj_t session);
 
 lsd_return_val_t lsd_connect(lsd_obj_t session, const char* device_name);
 

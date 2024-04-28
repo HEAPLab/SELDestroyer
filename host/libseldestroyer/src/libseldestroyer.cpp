@@ -16,7 +16,7 @@
 
 #include "libseldestroyer.h"
 #include "session.hpp"
-#include "exception.hpp"
+#include "global.hpp"
 
 #include <string>
 
@@ -28,6 +28,9 @@
 #define EXCEPTION_PROTECT_END } catch(const LSDException &lsde) { \
                         SPTR_CONV(session)->last_error = lsde.what();\
                         return lsde.get_error_code();\
+                    } catch(const std::exception &e) {\
+                        SPTR_CONV(session)->last_error = std::string("Generic error: ") + e.what();\
+                        return LSD_GENERIC_ERROR;\
                     } catch(...) {\
                         SPTR_CONV(session)->last_error = "Unknown error.";\
                         return LSD_GENERIC_ERROR;\
@@ -43,9 +46,20 @@ void lsd_close(lsd_obj_t session) {
     }
 }
 
+void lsd_debug_mode(bool is_enabled) {
+    extern bool overall_debug_enabled;
+    overall_debug_enabled = is_enabled;
+}
+
 
 lsd_return_val_t lsd_connect(lsd_obj_t session, const char* device_name) {
     EXCEPTION_PROTECT_START
-
+    SPTR_CONV(session)->device_connect(device_name);
     EXCEPTION_PROTECT_END
+
+    return LSD_OK;
+}
+
+const char *lsd_get_error(lsd_obj_t session) {
+    return SPTR_CONV(session)->last_error.c_str();
 }
