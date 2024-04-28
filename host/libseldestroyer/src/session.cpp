@@ -7,7 +7,13 @@ bool overall_debug_enabled=false;
 namespace libdestroyer {
 
     Session::Session() {
-        // TODO set lls_params
+        // Set default parameters
+        this->lls_params.device_name = "/dev/ttyUSB0";
+        this->lls_params.baudrate = 115200;
+        this->lls_params.number_bits = 8;
+        this->lls_params.parity_on = false;
+        this->lls_params.parity_is_odd = false;
+        this->lls_params.two_stop_bits = false;
     }
 
     void Session::device_connect(std::string device_name) {

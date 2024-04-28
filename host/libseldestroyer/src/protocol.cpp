@@ -9,6 +9,9 @@ namespace libdestroyer {
         debug("Protocol", "Initialization...");
         lls.connect();
 
+        // Just reset everything on start
+        lls.reset_trasmission();
+
     }
 
 } // namespace libdestroyer
