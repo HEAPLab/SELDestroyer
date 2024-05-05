@@ -12,7 +12,7 @@
     
 //------------------------------ Definitions ---------------------------------//
 
-#define SSD1306_I2C_ADDRESS   0x78
+#define SSD1306_I2C_ADDRESS   0x3C
 
 #define SSD1306_LCDWIDTH            128
 #define SSD1306_LCDHEIGHT            64
@@ -167,20 +167,15 @@ const char Font2[220] = {
 static void ssd1306_command(uint8_t c) {
     uint8_t data[2] = {0x00, c};   // Co = 0, D/C = 0
     
-    i2c_send_b(_i2caddr, data, 2);
+    i2c_send(_i2caddr, data, 2);
     
 }
 
 /*uint8_t vccstate = SSD1306_SWITCHCAPVCC, uint8_t i2caddr = SSD1306_I2C_ADDRESS*/
-void SSD1306_init(uint8_t vccstate, uint8_t i2caddr) {
-  _vccstate = vccstate;
-  _i2caddr  = i2caddr;
-  #ifdef SSD1306_RST
-    output_low(SSD1306_RST);
-    output_drive(SSD1306_RST);
-    delay_ms(10);
-    output_high(SSD1306_RST);
-  #endif
+void SSD1306_init(void) {
+  _vccstate = SSD1306_SWITCHCAPVCC;
+  _i2caddr  = SSD1306_I2C_ADDRESS;
+
   // Init sequence
   ssd1306_command(SSD1306_DISPLAYOFF);                    // 0xAE
   ssd1306_command(SSD1306_SETDISPLAYCLOCKDIV);            // 0xD5
@@ -193,7 +188,7 @@ void SSD1306_init(uint8_t vccstate, uint8_t i2caddr) {
   ssd1306_command(0x0);                                   // no offset
   ssd1306_command(SSD1306_SETSTARTLINE | 0x0);            // line #0
   ssd1306_command(SSD1306_CHARGEPUMP);                    // 0x8D
-  if (vccstate == SSD1306_EXTERNALVCC)
+  if (_vccstate == SSD1306_EXTERNALVCC)
     { ssd1306_command(0x10); }
   else
     { ssd1306_command(0x14); }
@@ -205,13 +200,13 @@ void SSD1306_init(uint8_t vccstate, uint8_t i2caddr) {
   ssd1306_command(SSD1306_SETCOMPINS);                    // 0xDA
   ssd1306_command(0x12);
   ssd1306_command(SSD1306_SETCONTRAST);                   // 0x81
-  if (vccstate == SSD1306_EXTERNALVCC)
+  if (_vccstate == SSD1306_EXTERNALVCC)
     { ssd1306_command(0x9F); }
   else
     { ssd1306_command(0xCF); }
 
   ssd1306_command(SSD1306_SETPRECHARGE);                  // 0xd9
-  if (vccstate == SSD1306_EXTERNALVCC)
+  if (_vccstate == SSD1306_EXTERNALVCC)
     { ssd1306_command(0x22); }
   else
     { ssd1306_command(0xF1); }
@@ -223,6 +218,7 @@ void SSD1306_init(uint8_t vccstate, uint8_t i2caddr) {
   ssd1306_command(SSD1306_DEACTIVATE_SCROLL);
 
   ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
+
 }
 
 void SSD1306_start_scroll_right(uint8_t start, uint8_t stop) {
@@ -344,7 +340,7 @@ void SSD1306_putc(uint8_t c) {
     c_data[i+1] = font_c;
   }
 
-  i2c_send_b(_i2caddr, c_data, 6);
+  i2c_send(_i2caddr, c_data, 6);
   
   x_pos = x_pos % 21 + 1;
   if (wrap && (x_pos == 1))
@@ -450,7 +446,7 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
 }
 #endif
 
-void SSD1306_putc_custom(char *c) {
+void SSD1306_putc_custom(const char *c) {
   uint8_t line;
   ssd1306_command(SSD1306_COLUMNADDR);
   ssd1306_command(6 * (x_pos - 1));
@@ -467,7 +463,7 @@ void SSD1306_putc_custom(char *c) {
     line = c[i];
     c_data[0] = line;
   }
-  i2c_send_b(_i2caddr, c_data, 6);
+  i2c_send(_i2caddr, c_data, 6);
 
   x_pos = x_pos % 21 + 1;
   if (wrap && (x_pos == 1))
@@ -475,7 +471,7 @@ void SSD1306_putc_custom(char *c) {
 
 }
 
-void SSD1306_clear(void) {
+bool SSD1306_clear(void) {
 
   ssd1306_command(SSD1306_COLUMNADDR);
   ssd1306_command(0);    // Column start address
@@ -485,8 +481,9 @@ void SSD1306_clear(void) {
   ssd1306_command(0);   // Page start address (0 = reset)
   ssd1306_command(7);   // Page end address
 
-  i2c_send_zeros_b(_i2caddr, 0x40, 0x00, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
-
+  bool x = i2c_send_zeros(SSD1306_I2C_ADDRESS, 0x40, 0x00, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
+  return x;
+  
 }
 
 void SSD1306_fill_screen(void) {
@@ -499,7 +496,7 @@ void SSD1306_fill_screen(void) {
   ssd1306_command(0);   // Page start address (0 = reset)
   ssd1306_command(7);   // Page end address
 
-  i2c_send_zeros_b(_i2caddr, 0x40, 0xFF, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
+  i2c_send_zeros(SSD1306_I2C_ADDRESS, 0x40, 0xFF, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
 
 
 }
