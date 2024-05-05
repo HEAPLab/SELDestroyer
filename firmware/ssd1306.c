@@ -7,6 +7,7 @@
 
 #include "ssd1306.h"
 #include "i2c.h"
+#include "global.h"
 
 #include <stdbool.h>
     
@@ -167,7 +168,9 @@ const char Font2[220] = {
 static void ssd1306_command(uint8_t c) {
     uint8_t data[2] = {0x00, c};   // Co = 0, D/C = 0
     
-    i2c_send(_i2caddr, data, 2);
+    if(!i2c_send(_i2caddr, data, 2)) {
+        throw_fatal_exception(FE_DISPLAY_PROBLEM);
+    }
     
 }
 
@@ -178,45 +181,36 @@ void SSD1306_init(void) {
 
   // Init sequence
   ssd1306_command(SSD1306_DISPLAYOFF);                    // 0xAE
-  ssd1306_command(SSD1306_SETDISPLAYCLOCKDIV);            // 0xD5
-  ssd1306_command(0x80);                                  // the suggested ratio 0x80
-
-  ssd1306_command(SSD1306_SETMULTIPLEX);                  // 0xA8
-  ssd1306_command(SSD1306_LCDHEIGHT - 1);
-
-  ssd1306_command(SSD1306_SETDISPLAYOFFSET);              // 0xD3
-  ssd1306_command(0x0);                                   // no offset
-  ssd1306_command(SSD1306_SETSTARTLINE | 0x0);            // line #0
-  ssd1306_command(SSD1306_CHARGEPUMP);                    // 0x8D
-  if (_vccstate == SSD1306_EXTERNALVCC)
-    { ssd1306_command(0x10); }
-  else
-    { ssd1306_command(0x14); }
+  
   ssd1306_command(SSD1306_MEMORYMODE);                    // 0x20
   ssd1306_command(SSD1306_MEMORYMODE_HORIZ);    // 0x0 act like ks0108
+  ssd1306_command(SSD1306_SETSTARTLINE | 0x0);            // line #0
   ssd1306_command(SSD1306_SEGREMAP | 0x1);
+  ssd1306_command(SSD1306_SETMULTIPLEX);                  // 0xA8
+  ssd1306_command(SSD1306_LCDHEIGHT - 1);
   ssd1306_command(SSD1306_COMSCANDEC);
-
+  ssd1306_command(SSD1306_SETDISPLAYOFFSET);              // 0xD3
+  ssd1306_command(0x0);                                   // no offset
   ssd1306_command(SSD1306_SETCOMPINS);                    // 0xDA
   ssd1306_command(0x12);
-  ssd1306_command(SSD1306_SETCONTRAST);                   // 0x81
-  if (_vccstate == SSD1306_EXTERNALVCC)
-    { ssd1306_command(0x9F); }
-  else
-    { ssd1306_command(0xCF); }
-
+  ssd1306_command(SSD1306_SETDISPLAYCLOCKDIV);            // 0xD5
+  ssd1306_command(0x80);                                  // the suggested ratio 0x80
   ssd1306_command(SSD1306_SETPRECHARGE);                  // 0xd9
   if (_vccstate == SSD1306_EXTERNALVCC)
     { ssd1306_command(0x22); }
   else
     { ssd1306_command(0xF1); }
   ssd1306_command(SSD1306_SETVCOMDETECT);                 // 0xDB
-  ssd1306_command(0x40);
+  ssd1306_command(0x30);
+  ssd1306_command(SSD1306_SETCONTRAST);                   // 0x81
+  ssd1306_command(0xFF);
   ssd1306_command(SSD1306_DISPLAYALLON_RESUME);           // 0xA4
   ssd1306_command(SSD1306_NORMALDISPLAY);                 // 0xA6
-
-  ssd1306_command(SSD1306_DEACTIVATE_SCROLL);
-
+  ssd1306_command(SSD1306_CHARGEPUMP);                    // 0x8D
+  if (_vccstate == SSD1306_EXTERNALVCC)
+    { ssd1306_command(0x10); }
+  else
+    { ssd1306_command(0x14); }
   ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
 
 }
@@ -461,7 +455,7 @@ void SSD1306_putc_custom(const char *c) {
   
   for(uint8_t i = 0; i < 5; i++ ) {
     line = c[i];
-    c_data[0] = line;
+    c_data[i+1] = line;
   }
   i2c_send(_i2caddr, c_data, 6);
 
@@ -471,7 +465,7 @@ void SSD1306_putc_custom(const char *c) {
 
 }
 
-bool SSD1306_clear(void) {
+void SSD1306_clear(void) {
 
   ssd1306_command(SSD1306_COLUMNADDR);
   ssd1306_command(0);    // Column start address
@@ -481,8 +475,7 @@ bool SSD1306_clear(void) {
   ssd1306_command(0);   // Page start address (0 = reset)
   ssd1306_command(7);   // Page end address
 
-  bool x = i2c_send_zeros(SSD1306_I2C_ADDRESS, 0x40, 0x00, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
-  return x;
+  i2c_send_many_bytes(SSD1306_I2C_ADDRESS, 0x40, 0x00, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
   
 }
 
@@ -496,7 +489,7 @@ void SSD1306_fill_screen(void) {
   ssd1306_command(0);   // Page start address (0 = reset)
   ssd1306_command(7);   // Page end address
 
-  i2c_send_zeros(SSD1306_I2C_ADDRESS, 0x40, 0xFF, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
+  i2c_send_many_bytes(SSD1306_I2C_ADDRESS, 0x40, 0xFF, SSD1306_LCDHEIGHT * SSD1306_LCDWIDTH / 8);
 
 
 }

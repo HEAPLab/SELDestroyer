@@ -39,6 +39,8 @@ static void i2c_send_stop(void) {
 }
 
 static bool i2c_send_raw(uint8_t address, const uint8_t* data, uint8_t nr_bytes) {
+    
+    PIR1bits.SSP1IF = 0;
     SSP1BUF = (uint8_t)(address << 1);
     
     uint8_t count = 0;
@@ -62,11 +64,15 @@ static bool i2c_send_raw(uint8_t address, const uint8_t* data, uint8_t nr_bytes)
 }
 
 static bool i2c_recv_raw(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
-        
+    
+    PIR1bits.SSP1IF = 0;
+    
     SSP1BUF = (uint8_t)(address << 1);
 
     // Wait full transmit of the address
     while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);
+    
+    PIR1bits.SSP1IF = 0;
     
     if(SSP1CON2bits.ACKSTAT == 1) {
         // NACK received
@@ -125,35 +131,44 @@ uint8_t i2c_send_recv(uint8_t address, const uint8_t* send_data, uint8_t send_nr
     return status ? 0 : 2;
 }
 
-bool i2c_send_zeros(uint8_t address, uint8_t command, uint8_t byte, uint16_t nr_bytes) {
-    i2c_send_start();
 
+bool i2c_send_many_bytes(uint8_t address, uint8_t command, uint8_t byte, uint16_t nr_bytes) {
+    i2c_send_start();
+    
+    PIR1bits.SSP1IF = 0;
+    
     SSP1BUF = (uint8_t)(address << 1);
     
     while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);
 
+    PIR1bits.SSP1IF = 0;
+    
     if(SSP1CON2bits.ACKSTAT == 1) {
         // NACK received
         i2c_send_stop();
         return false;
     }
-    
+
     SSP1BUF = command;
 
     while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);
 
+    PIR1bits.SSP1IF = 0;
+    
     if(SSP1CON2bits.ACKSTAT == 1) {
         // NACK received
         i2c_send_stop();
         return false;
     }
 
-    uint16_t count = 0;
-    while (count++ < nr_bytes) {
+    uint16_t count;
+    for (count = 0; count < nr_bytes; count++) {
         SSP1BUF = byte;
 
         while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);
 
+        PIR1bits.SSP1IF = 0;
+        
         if(SSP1CON2bits.ACKSTAT == 1) {
             // NACK received
             i2c_send_stop();
@@ -162,6 +177,6 @@ bool i2c_send_zeros(uint8_t address, uint8_t command, uint8_t byte, uint16_t nr_
         }
     }
 
-    i2c_send_stop();    
+    i2c_send_stop();
     return true;
 }

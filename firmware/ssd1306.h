@@ -18,7 +18,7 @@ void SSD1306_gotoXY(uint8_t x, uint8_t y);
 void SSD1306_putc(uint8_t c);
 void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult);
 void SSD1306_putc_custom(const char *c);
-bool SSD1306_clear(void);
+void SSD1306_clear(void);
 void SSD1306_fill_screen(void);
 
 #endif	/* SSD1306_H */

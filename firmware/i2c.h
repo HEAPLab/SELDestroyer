@@ -17,7 +17,7 @@ bool i2c_send(uint8_t address, const uint8_t* data, uint8_t nr_bytes);
 /**
  * Send a sequence of identical bytes on the I2C bus in BLOCKING mode
  */
-bool i2c_send_zeros(uint8_t address, uint8_t command, uint8_t byte, uint16_t nr_bytes);
+bool i2c_send_many_bytes(uint8_t address, uint8_t command, uint8_t byte, uint16_t nr_bytes);
 
 
 /**

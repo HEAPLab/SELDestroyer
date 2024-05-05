@@ -21,6 +21,7 @@
 typedef enum fatal_exception_e {
     FE_NONE=0b000,
     FE_UNABLE_INIT_INA233=0b001,
+            FE_DISPLAY_PROBLEM=0b010
 } fatal_exception_t;
 
 extern void __attribute__((noreturn)) throw_fatal_exception(fatal_exception_t error_code);

@@ -38,13 +38,25 @@ void main(void) {
 //    ina233_res_t x = ina233_read();
     
     SSD1306_init();
-    bool cx = SSD1306_clear();
+    SSD1306_clear();
     //SSD1306_fill_screen();
-//    SSD1306_gotoXY(1,1);
-//    SSD1306_putc_custom("Ciao");
+    SSD1306_gotoXY(3,5);
+    SSD1306_putc('Z');
+    SSD1306_putc('a');
+    SSD1306_putc('n');
+    SSD1306_putc('e');
+    SSD1306_putc('l');
+    SSD1306_putc('l');
+    SSD1306_putc('a');
+    SSD1306_putc(' ');
+    SSD1306_putc('c');
+    SSD1306_putc('u');
+    SSD1306_putc('l');
+    SSD1306_putc('o');
+    //SSD1306_putc_custom("Ciao Jabina");
     
-    while(cx) {
-        
+    while(1) {
+
     }
     
     return;
