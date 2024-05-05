@@ -3,11 +3,17 @@
 
 // 'C' source line config statements
 
+#include "global.h"
+
 // CONFIG1
-#pragma config FEXTOSC = ECM    // FEXTOSC External Oscillator mode Selection bits (EC (external clock) for 100 kHz to 8 MHz)
-#pragma config RSTOSC = EXT4X   // Power-up default value for COSC bits (EXTOSC with 4x PLL, with EXTOSC operating per FEXTOSC bits)
+#if USE_EXT_OSCILLATOR
+    #pragma config FEXTOSC = ECM    // FEXTOSC External Oscillator mode Selection bits (EC (external clock) for 100 kHz to 8 MHz)
+    #pragma config RSTOSC = EXT4X   // Power-up default value for COSC bits (EXTOSC with 4x PLL, with EXTOSC operating per FEXTOSC bits)
+#else
+    #pragma config RSTOSC = HFINT32
+#endif 
 #pragma config CLKOUTEN = OFF   // Clock Out Enable bit (CLKOUT function is disabled; I/O or oscillator function on OSC2)
-#pragma config CSWEN = ON       // Clock Switch Enable bit (Writing to NOSC and NDIV is allowed)
+#pragma config CSWEN = OFF      // Clock Switch Enable bit (Writing to NOSC and NDIV is not allowed)
 #pragma config FCMEN = OFF      // Fail-Safe Clock Monitor Enable (Fail-Safe Clock Monitor is disabled)
 
 // CONFIG2

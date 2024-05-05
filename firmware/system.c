@@ -25,8 +25,10 @@ void system_io_init(void) {
     TRISAbits.TRISA4 = 1;   // OSC1
     TRISAbits.TRISA5 = 1;   // OSC1
 
+    // "In Master mode, the SDA and SCK pins must be configured as inputs. "
     TRISCbits.TRISC0 = 1;   // ### - I2C managed
     TRISCbits.TRISC1 = 1;   // ### - I2C managed
+
     TRISCbits.TRISC2 = 1;   // Input - INA233_ALARMIN   // TODO: we need pull up?
     TRISCbits.TRISC3 = 0;   // Output - LED status
     TRISCbits.TRISC4 = 1;   // ### - Serial managed
