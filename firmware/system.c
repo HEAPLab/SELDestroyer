@@ -7,6 +7,23 @@ void system_primary_init(void) {
     
 }
 
+static void serial_init(void) {
+    // Baud rate configuration (57600)
+    TX1STAbits.SYNC  = 0;
+    TX1STAbits.BRGH  = 1;
+    BAUD1CONbits.BRG16 = 1;
+    SP1BRG = 138;
+    
+    RC1STAbits.SPEN = 1;    // Enable serial module
+    TX1STAbits.TXEN = 1;    // Enable transmission mode
+    PIR1bits.TXIF = 0;      // Clear the interrupt flag
+ 
+    PIE1bits.RCIE = 1;      // Enable interrupts
+    RC1STAbits.CREN = 1;    // Enable receiver mode
+    PIR1bits.RCIF = 0;      // Clear the interrupt flag
+
+}
+
 void system_io_init(void) {
 
     ANSELA = ANSELC = 0;    // All inputs are digital
@@ -47,6 +64,26 @@ void system_io_init(void) {
     RC1PPS = 0b11001;
     
     // TODO: lock PPS registers
+
+    // Enable interrupts
+    INTCONbits.PEIE = 1;
+    INTCONbits.GIE  = 1;
+    
+    // Init serial port
+    serial_init();
     
 }
 
+void __interrupt() ISR(void) {
+    if(PIR1bits.RCIF) {
+        if(RC1STAbits.OERR) {
+            // The only way to clear overflow error:
+            RC1STAbits.CREN = 0;
+            RC1STAbits.CREN = 1;
+            // Should we call a protocol discharge?
+        } else {
+            serial_send_char(RC1REG);
+        }
+        PIR1bits.RCIF = 0;
+    }
+}
