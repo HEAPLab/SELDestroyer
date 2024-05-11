@@ -57,8 +57,9 @@
 #define SSD1306_VERTICAL_AND_RIGHT_HORIZONTAL_SCROLL 0x29
 #define SSD1306_VERTICAL_AND_LEFT_HORIZONTAL_SCROLL  0x2A
 
+#define ENABLE_FANCY_STUFF 0
 
-static uint8_t _i2caddr, _vccstate, x_pos = 1, y_pos = 1;
+static uint8_t _vccstate, x_pos = 1, y_pos = 1;
 
 //--------------------------------------------------------------------------//
 
@@ -168,16 +169,13 @@ const char Font2[220] = {
 static void ssd1306_command(uint8_t c) {
     uint8_t data[2] = {0x00, c};   // Co = 0, D/C = 0
     
-    if(!i2c_send(_i2caddr, data, 2)) {
-        throw_fatal_exception(FE_DISPLAY_PROBLEM);
-    }
+    i2c_send(SSD1306_I2C_ADDRESS, data, 2);
     
 }
 
 /*uint8_t vccstate = SSD1306_SWITCHCAPVCC, uint8_t i2caddr = SSD1306_I2C_ADDRESS*/
 void SSD1306_init(void) {
   _vccstate = SSD1306_SWITCHCAPVCC;
-  _i2caddr  = SSD1306_I2C_ADDRESS;
 
   // Init sequence
   ssd1306_command(SSD1306_DISPLAYOFF);                    // 0xAE
@@ -214,6 +212,8 @@ void SSD1306_init(void) {
   ssd1306_command(SSD1306_DISPLAYON);//--turn on oled panel
 
 }
+
+#if ENABLE_FANCY_STUFF
 
 void SSD1306_start_scroll_right(uint8_t start, uint8_t stop) {
   ssd1306_command(SSD1306_RIGHT_HORIZONTAL_SCROLL);
@@ -267,21 +267,17 @@ void SSD1306_stop_scroll(void) {
   ssd1306_command(SSD1306_DEACTIVATE_SCROLL);
 }
 
-void SSD1306_dim(char dim) {
-  uint8_t contrast;
-  if (dim)
-    contrast = 0; // Dimmed display
-  else {
-    if (_vccstate == SSD1306_EXTERNALVCC)
-      contrast = 0x9F;
-    else
-      contrast = 0xCF;
-  }
-  // the range of contrast to too small to be really useful
-  // it is useful to dim the display
+void SSD1306_dim(uint8_t contrast) {
+  if (_vccstate == SSD1306_EXTERNALVCC)
+    contrast = contrast > 0x9F ? 0x9F : contrast;
+  else
+    contrast = contrast > 0xCF ? 0xCF : contrast;
+
   ssd1306_command(SSD1306_SETCONTRAST);
   ssd1306_command(contrast);
 }
+
+#endif 
 
 void SSD1306_set_text_wrap(char w) {
   wrap = w;
@@ -305,8 +301,9 @@ void SSD1306_putc(uint8_t c) {
   uint8_t font_c;
   
   
-  if((c < ' ') || (c > '~'))
-    c = '?';
+  if((c < ' ') || (c > '~')) {
+      c = '?';      
+  }
   ssd1306_command(SSD1306_COLUMNADDR);
   ssd1306_command(6 * (x_pos - 1));
   ssd1306_command(6 * (x_pos - 1) + 4); // Column end address (127 = reset)
@@ -323,18 +320,20 @@ void SSD1306_putc(uint8_t c) {
   
   for(uint8_t i = 0; i < 5; i++ ) {
     uint8_t offs;
-    if(c < 'S') {
+    if(c == '#') {
+        font_c = 0xFF;
+    } else if(c < 'S') {
         offs = (c - 32)*5;
         font_c = Font[offs + i];
     } else {
         offs = (c - 'S')*5;
         font_c = Font2[offs + i];
-    } 
+    }
     
     c_data[i+1] = font_c;
   }
 
-  i2c_send(_i2caddr, c_data, 6);
+  i2c_send(SSD1306_I2C_ADDRESS, c_data, 6);
   
   x_pos = x_pos % 21 + 1;
   if (wrap && (x_pos == 1))
@@ -342,11 +341,11 @@ void SSD1306_putc(uint8_t c) {
 
 }
 
-#if 0
+
 void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
   uint8_t font_c;
   
-  ssd1306_command(SSD1306_MEMORYMODE);                    // 0x20
+  ssd1306_command(SSD1306_MEMORYMODE);         // 0x20
   ssd1306_command(SSD1306_MEMORYMODE_VERT);    // 0x0 act like ks0108
   
   if((c < ' ') || (c > '~'))
@@ -379,9 +378,11 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
   ssd1306_command(y_pos - 1); // Page start address (0 = reset)
   ssd1306_command((y_pos - 1)+(size_mult - 1)); // Page end address
   
-  uint8_t c_data[20];
-  c_data[0]= 0x40;
-  uint8_t c_data_i = 1;
+  
+  i2c_send_start();
+  i2c_send_raw_byte(SSD1306_I2C_ADDRESS << 1);
+  i2c_send_raw_byte(0x40);
+
   
   for(uint8_t i = 0; i < 5; i++ ) {
     
@@ -398,7 +399,7 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
     
     if(size_mult == 1) {
         //no need to stretch, 1 byte == 1 byte
-        c_data[c_data_i++]= font_c;
+        i2c_send_raw_byte(font_c);
     } else {
         //multiply out the bits by the size (i.e. stretch them across the bytes
         // of b)
@@ -418,12 +419,12 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
         //for each of the new stretched bytes, print them across rows and columns
         for(uint8_t i = 0; i < size_mult; i++) {
             for(uint8_t bn = 0; bn < size_mult; bn++) {
-                c_data[c_data_i++]= b[bn];
+                i2c_send_raw_byte(b[bn]);
             }
         }
     } 
   }
-  i2c_send_b(_i2caddr, c_data, c_data_i);
+  i2c_send_stop();
 
   x_pos += size_mult;
   if(x_pos > 21) {
@@ -438,7 +439,7 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
   ssd1306_command(SSD1306_MEMORYMODE_HORIZ);    // 0x0 act like ks0108
   
 }
-#endif
+
 
 void SSD1306_putc_custom(const char *c) {
   uint8_t line;
@@ -457,7 +458,7 @@ void SSD1306_putc_custom(const char *c) {
     line = c[i];
     c_data[i+1] = line;
   }
-  i2c_send(_i2caddr, c_data, 6);
+  i2c_send(SSD1306_I2C_ADDRESS, c_data, 6);
 
   x_pos = x_pos % 21 + 1;
   if (wrap && (x_pos == 1))

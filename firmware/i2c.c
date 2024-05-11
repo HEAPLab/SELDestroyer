@@ -13,17 +13,19 @@ void i2c_init(void) {
 #endif
     
     SSP1STATbits.SMP = 0;   // Enable slew rate control for 400 kHz operations
-    SSP1STATbits.CKE = 0;   // Disable SMBus voltages
+    SSP1STATbits.CKE = 1;   // Enable SMBus voltages
 
     SSP1CON1bits.WCOL  = 0; // Clear status bits just to be sure
     SSP1CON1bits.SSPOV = 0; // Clear status bits just to be sure
     
     SSP1CON1bits.SSPM = 0b1000; // Configue modules as I2C Master mode
     
+    SSP1CON3bits.SDAHT = 0; // Increase SDA hold time for robustness
+    
     SSP1CON1bits.SSPEN = 1; // Enable module
 }
 
-static void i2c_send_start(void) {
+void i2c_send_start(void) {
     SSP1CON2bits.SEN = 1;
     while(SSP1CON2bits.SEN == 1);
 }
@@ -33,7 +35,7 @@ static void i2c_send_restart(void) {
     while(SSP1CON2bits.RSEN == 1);
 }
 
-static void i2c_send_stop(void) {
+void i2c_send_stop(void) {
     SSP1CON2bits.PEN = 1;
     while(SSP1CON2bits.PEN == 1);
 }
@@ -63,6 +65,24 @@ static bool i2c_send_raw(uint8_t address, const uint8_t* data, uint8_t nr_bytes)
     return true;
 }
 
+bool i2c_send_raw_byte(uint8_t data) {
+    
+    PIR1bits.SSP1IF = 0;
+    SSP1BUF = data;
+    
+    while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);
+
+    PIR1bits.SSP1IF = 0;
+
+    if(SSP1CON2bits.ACKSTAT == 1) {
+        // NACK received
+        return false;
+    }
+            
+    return true;
+}
+
+
 static bool i2c_recv_raw(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
     
     PIR1bits.SSP1IF = 0;
@@ -83,13 +103,16 @@ static bool i2c_recv_raw(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
     
     for (; count < nr_bytes; count++) {
         SSP1CON2bits.RCEN = 1;
-        while(SSP1CON2bits.RCEN == 1 || SSP1STATbits.BF==0 );
+        while(SSP1STATbits.BF==0 || PIR1bits.SSP1IF == 0);
+        PIR1bits.SSP1IF = 0;
         
-        data[count] = SSP1BUF;
+        data[count] = SSP1BUF;  // This clears BG
         
         SSP1CON2bits.ACKDT = (count+1 == nr_bytes ? 1 : 0);
         SSP1CON2bits.ACKEN = 1;
-        while(SSP1CON2bits.ACKEN == 1);
+        while(PIR1bits.SSP1IF == 0);
+        PIR1bits.SSP1IF = 0;
+
     }
     
     return true;

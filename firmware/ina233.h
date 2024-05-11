@@ -2,10 +2,11 @@
 #define	INA233_H
 
 #include <stdbool.h>
+#include <stdint.h>
 
 typedef struct ina233_res_s {
-    float V;
-    float I;
+    int16_t V; // * 1000 mV  // VVMMM
+    int16_t I; // * 1000 mA  // AAMMM
     bool valid;
 } ina233_res_t;
 

@@ -11,7 +11,7 @@
 #define INA233_READ_IIN 0x89     // Retrieves the input current measurement
 
 // Computation for the INA233
-// Max current: 2A
+// Max current: 10A
 // Current_LSB = (2^4)/(2^15) = 2^(-11)
 // MFR_CALIBRATION = 0.00512 / (2^(-11) * 0.002) = 5243 = 0x147B
 #define INA233_CURRENT_LSB_M1 0x1p11F
@@ -26,7 +26,7 @@ void ina233_init(void) {
     bool val = i2c_send(INA233_ADDRESS, &command, 1);
     
     if(!val) {
-        throw_fatal_exception(FE_UNABLE_INIT_INA233);
+        throw_fatal_exception();
     }
     
     // Config the scale coefficient
@@ -39,7 +39,7 @@ void ina233_init(void) {
     val = i2c_send(INA233_ADDRESS, register_and_data, 3);
 
     if(!val) {
-        throw_fatal_exception(FE_UNABLE_INIT_INA233);
+        throw_fatal_exception();
     }
 
     
@@ -53,7 +53,7 @@ void ina233_init(void) {
     val = i2c_send(INA233_ADDRESS, register_and_data_2, 3);
 
     if(!val) {
-        throw_fatal_exception(FE_UNABLE_INIT_INA233);
+        throw_fatal_exception();
     }
 
 }
@@ -62,7 +62,7 @@ void ina233_init(void) {
 
 
 ina233_res_t ina233_read(void) {
-    ina233_res_t to_ret;    
+    ina233_res_t to_ret;
     uint8_t readed_vin[2];
     uint8_t readed_iin[2];
     uint8_t register_id;
@@ -81,8 +81,8 @@ ina233_res_t ina233_read(void) {
 
     if(status != 0) to_ret.valid = false;
     
-    to_ret.V = 1/8.F * REG2VAL(readed_vin) * 1e-2F;
-    to_ret.I = REG2VAL(readed_iin) / INA233_CURRENT_LSB_M1;
+    to_ret.V = REG2VAL(readed_vin) * 10 / 8;
+    to_ret.I = REG2VAL(readed_iin) * 1000L / 2048L;
 
     return to_ret;
 
