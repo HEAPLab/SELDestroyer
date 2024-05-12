@@ -126,7 +126,7 @@ bool i2c_send(uint8_t address, const uint8_t* data, uint8_t nr_bytes) {
     return status;
 }
 
-
+#if 0
 bool i2c_recv(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
     i2c_send_start();
     bool status = i2c_recv_raw(address, data, nr_bytes);
@@ -134,6 +134,7 @@ bool i2c_recv(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
     
     return status;
 }
+#endif
 
 uint8_t i2c_send_recv(uint8_t address, const uint8_t* send_data, uint8_t send_nr_bytes, uint8_t* recv_data, uint8_t recv_nr_bytes) {
     bool status;

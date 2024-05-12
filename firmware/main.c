@@ -13,7 +13,7 @@
 #include "i2c.h"
 #include "ssd1306.h"
 #include "ina233.h"
-
+#include "protocol.h"
 
 ina233_res_t main_current_readings;
 
@@ -52,7 +52,7 @@ void main(void) {
         __delay_ms(50);
         IO_LED_STATUS_SET(0);
         __delay_ms(50);
-        serial_send_char('X');
+        protocol_update();
     }
     
     return;

@@ -22,10 +22,12 @@ void system_primary_init(void);
 void system_io_init(void);
 
 
-static inline void serial_send_char(char c) {
-    while(TRMT==0);
-    TX1REG = c;
+#define serial_send_char(c) {\
+    while(TRMT==0);\
+    TX1REG = (c);\
 }
+
+void serial_send_cmd(const char *s);
 
 
 #endif /* SYSTEM_H */

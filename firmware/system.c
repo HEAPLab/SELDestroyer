@@ -1,5 +1,7 @@
 #include "system.h"
 
+#include "protocol.h"
+
 void system_primary_init(void) {
     //  Let's wait for the oscillator
     
@@ -82,8 +84,17 @@ void __interrupt() ISR(void) {
             RC1STAbits.CREN = 1;
             // Should we call a protocol discharge?
         } else {
-            serial_send_char(RC1REG);
+            protocol_digest_char(RC1REG);
         }
         PIR1bits.RCIF = 0;
     }
+}
+
+void serial_send_cmd(const char *s) {
+    serial_send_char('$');
+    while (*s != '\0') {
+        serial_send_char(*s);
+        s++;
+    }
+    serial_send_char('\n');
 }

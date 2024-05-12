@@ -283,12 +283,14 @@ void SSD1306_set_text_wrap(char w) {
   wrap = w;
 }
 
+#if 0
 void SSD1306_invert_display(char i) {
   if (i)
     ssd1306_command(SSD1306_INVERTDISPLAY_);
   else
     ssd1306_command(SSD1306_NORMALDISPLAY);
 }
+#endif
 
 void SSD1306_gotoXY(uint8_t x, uint8_t y) {
   if((x > 21) || y > 8)
@@ -440,7 +442,7 @@ void SSD1306_putc_stretch(uint8_t c, uint8_t size_mult) {
   
 }
 
-
+#if 0
 void SSD1306_putc_custom(const char *c) {
   uint8_t line;
   ssd1306_command(SSD1306_COLUMNADDR);
@@ -465,6 +467,7 @@ void SSD1306_putc_custom(const char *c) {
     y_pos = y_pos % 8 + 1;
 
 }
+#endif
 
 void SSD1306_clear(void) {
 
@@ -480,6 +483,7 @@ void SSD1306_clear(void) {
   
 }
 
+#if 0
 void SSD1306_fill_screen(void) {
 
   ssd1306_command(SSD1306_COLUMNADDR);
@@ -494,3 +498,4 @@ void SSD1306_fill_screen(void) {
 
 
 }
+#endif

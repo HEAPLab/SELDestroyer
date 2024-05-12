@@ -7,6 +7,7 @@
 #include "ina233.h"
 #include "destroyer.h"
 
+#define DISABLE_SPLASH 1
 
 char str_buffer[10];
 
@@ -117,9 +118,14 @@ static void print_str(const char* str) {
 void display_init_sequence(void) {
 
     SSD1306_set_text_wrap(false);
-    
+
     SSD1306_clear();
 
+#if DISABLE_SPLASH
+    return;
+#endif
+    
+    
     //SSD1306_fill_screen();
     SSD1306_gotoXY(9,3);
     SSD1306_putc_stretch('H', 2);
@@ -140,6 +146,7 @@ void display_init_sequence(void) {
 
     SSD1306_clear();
     
+
     SSD1306_gotoXY(5,1);
     print_str("SEL Destroyer");
 
@@ -228,7 +235,7 @@ void display_update(void) {
 
 
     SSD1306_gotoXY(1,8);
-    u162buffer_pad(destroyer_data.count);
+    u162buffer_pad((uint16_t)destroyer_data.count);
     print_str("Count:    ");
     print_str(str_buffer);
     
