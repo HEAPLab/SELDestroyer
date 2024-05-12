@@ -98,3 +98,36 @@ void serial_send_cmd(const char *s) {
     }
     serial_send_char('\n');
 }
+
+uint8_t EEPROM_read(uint8_t addr) {
+    // FSR address space between 0x7000 and 0x70FF.
+    NVMCON1bits.NVMREGS = 1;    // Reading from EEPROM
+    NVMADRH = 0xF0;
+    NVMADRL = addr;
+    NVMCON1bits.RD = 1; // Initiate the read
+    return NVMDATL;
+}
+
+void EEPROM_write(uint8_t addr, uint8_t data) {
+
+    NVMCON1bits.NVMREGS = 1;    // Writing to EEPROM
+
+    NVMCON1bits.WREN = 1;   // Enable WRITE mode
+
+    NVMADRH = 0xF0;
+    NVMADRL = addr;
+    NVMDAT = data;
+
+    // Unlock sequence
+    INTCONbits.GIE = 0; // Disable interrupts
+    NVMCON2 = 0x55;
+    NVMCON2 = 0xAA;
+    NVMCON1bits.WR = 1;
+    INTCONbits.GIE = 1; // Re-enable interrupts
+
+    NVMCON1bits.WREN = 0;   // Disable WRITE mode (it's safe)
+
+    while(NVMCON1bits.WR);  // Wait completion
+
+}
+

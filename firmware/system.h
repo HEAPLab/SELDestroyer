@@ -6,6 +6,8 @@
 
 #include <xc.h>
 
+#include <stdint.h>
+
 #define DEBUG_IS_ACTIVE 1
 
 #define IO_LED_STATUS_SET(x) LATCbits.LATC3 = (x);
@@ -16,6 +18,16 @@
     #define IO_LED_BUZZER_SET(x) LATAbits.LATA0 = (x);
 #endif
 
+#define EEPROM_ADDR_ULIM_LO 0x10
+#define EEPROM_ADDR_ULIM_HI 0x11
+
+#define EEPROM_ADDR_TLIM_LO 0x15
+#define EEPROM_ADDR_TLIM_MI 0x16
+#define EEPROM_ADDR_TLIM_HI 0x17
+
+#define EEPROM_ADDR_AVG_MODE 0x1A
+
+#define EEPROM_ADDR_OUT_STAT 0x1F
 
 void system_primary_init(void);
 
@@ -29,5 +41,14 @@ void system_io_init(void);
 
 void serial_send_cmd(const char *s);
 
+uint8_t EEPROM_read(uint8_t addr);
+
+void EEPROM_write(uint8_t addr, uint8_t data);
+
+
+void destroyer_save_I_lim(void);
+void destroyer_save_T_lim(void);
+void destroyer_save_AVG_mode(void);
+void destroyer_save_OUT_stat(void);
 
 #endif /* SYSTEM_H */
