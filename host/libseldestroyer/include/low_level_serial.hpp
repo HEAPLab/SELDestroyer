@@ -26,7 +26,7 @@ public:
 
     void reset_trasmission();
 
-    void send(const std::vector<unsigned char> &data);
+    void send(const std::string &data);
 
     unsigned char recv();
 

@@ -9,6 +9,8 @@
 #include <termios.h>    // POSIX terminal control definitions
 
 #define SPECIAL_CHAR '$'
+#define ESCAPE_CHAR '\\'
+#define ENDLINE_CHAR '\n'
 
 namespace libdestroyer {
 
@@ -78,6 +80,7 @@ void LowLevelSerial::connect() {
 
     tty.c_cflag     &=  ~CSIZE; // Reset size
 
+
     switch(serial_params.number_bits) {
         case 8: tty.c_cflag     |=  CS8;
         break;
@@ -95,6 +98,9 @@ void LowLevelSerial::connect() {
     tty.c_cflag     |=  CREAD | CLOCAL;     // turn on READ & ignore ctrl lines
 
     tty.c_cc[VMIN]   =  0;                  // read block
+    tty.c_cc[VTIME] = 20;  // Set timeout of 2.0 seconds
+
+    tty.c_lflag &= ~ICANON; // Set non-canonical mode
 
     // RAW serial: input is available character by character, echoing is disabled,
     // and all special processing of terminal input and output characters is disabled.
@@ -113,40 +119,53 @@ void LowLevelSerial::connect() {
 }
 
 void LowLevelSerial::reset_trasmission() {
-    constexpr int nr_chars = 2;
-    const char reset_signal[nr_chars] = { SPECIAL_CHAR, 'r' };
-    int count = write(this->fd, reset_signal, nr_chars);
-    if (count != nr_chars) {
-        throw LSDException(LSD_CONN_PROBLEM, std::string("write(1): ") + std::strerror(errno));
-    }
+    // Not sure what to do here
 }
 
-void LowLevelSerial::send(const std::vector<unsigned char> &data) {
+void LowLevelSerial::send(const std::string &data) {
+
+    char nl=SPECIAL_CHAR;
+    int count = write(this->fd, &nl, 1);
+    if (count != 1) {
+        throw LSDException(LSD_CONN_PROBLEM, std::string("write(2): ") + std::strerror(errno));
+    }
+
     for (unsigned char uc : data) {
-        if (uc == SPECIAL_CHAR) {
+        if (uc == SPECIAL_CHAR || uc == ENDLINE_CHAR) {
             // Escaping special char
-            char escape = SPECIAL_CHAR;
-            int count = write(this->fd, &escape, 1);
+            char escape = ESCAPE_CHAR;
+            count = write(this->fd, &escape, 1);
             if (count != 1) {
-                throw LSDException(LSD_CONN_PROBLEM, std::string("write(2): ") + std::strerror(errno));
+                throw LSDException(LSD_CONN_PROBLEM, std::string("write(3): ") + std::strerror(errno));
             }
         }
-        int count = write(this->fd, &uc, 1);
+        count = write(this->fd, &uc, 1);
         if (count != 1) {
-            throw LSDException(LSD_CONN_PROBLEM, std::string("write(3): ") + std::strerror(errno));
+            throw LSDException(LSD_CONN_PROBLEM, std::string("write(4): ") + std::strerror(errno));
         }
     }
+
+    nl=ENDLINE_CHAR;
+    count = write(this->fd, &nl, 1);
+    if (count != 1) {
+        throw LSDException(LSD_CONN_PROBLEM, std::string("write(5): ") + std::strerror(errno));
+    }
+    
 }
 
 unsigned char LowLevelSerial::recv() {
     int count;
     char to_ret;
 
+    alarm(5);
+
     count = read(this->fd, &to_ret, 1);
 
     if(count <= 0) {
         throw LSDException(LSD_CONN_PROBLEM, std::string("read(1): ") + std::strerror(errno));
     }
+
+    alarm(0);
 
     return to_ret;
 }
