@@ -87,7 +87,7 @@ static bool i2c_recv_raw(uint8_t address, uint8_t* data, uint8_t nr_bytes) {
     
     PIR1bits.SSP1IF = 0;
     
-    SSP1BUF = (uint8_t)(address << 1);
+    SSP1BUF = (uint8_t)(address << 1) | 1;
 
     // Wait full transmit of the address
     while(SSP1STATbits.BF==1 || PIR1bits.SSP1IF == 0);

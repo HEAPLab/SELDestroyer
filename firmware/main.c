@@ -21,18 +21,20 @@ ina233_res_t main_current_readings;
 void main(void) {
 
     system_io_init();
+    
+    // TODO: Set 1 here!
+    IO_OUTPUT_DIS_SET(0);   // Disable output for safety
+    IO_BUZZER_SET(0);       // Disable buzzer (we have an hardware problem with it)
 
     IO_LED_STATUS_SET(1);
     system_primary_init();
     IO_LED_STATUS_SET(0);
-        
+
     for (int i=0; i<3; i++) {        
         IO_LED_STATUS_SET(1);
-        IO_LED_BUZZER_SET(1);
         __delay_ms(50);
         
         IO_LED_STATUS_SET(0);
-        IO_LED_BUZZER_SET(0);
         __delay_ms(50);
     }
     

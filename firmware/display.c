@@ -228,7 +228,7 @@ void display_update(void) {
 
     SSD1306_gotoXY(1,6);
 
-    fixed2buffer(main_current_readings.V * main_current_readings.I);
+    fixed2buffer((int16_t)(((int32_t)main_current_readings.V) * main_current_readings.I / 1000));
     print_str("P:   ");
     print_str(str_buffer);
     print_str("  W");

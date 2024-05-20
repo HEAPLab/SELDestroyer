@@ -10,13 +10,10 @@
 
 #define DEBUG_IS_ACTIVE 1
 
+#define IO_OUTPUT_DIS_SET(x) LATAbits.LATA2 = (x);
 #define IO_LED_STATUS_SET(x) LATCbits.LATC3 = (x);
 
-#if DEBUG_IS_ACTIVE
-    #define IO_LED_BUZZER_SET(x)
-#else
-    #define IO_LED_BUZZER_SET(x) LATAbits.LATA0 = (x);
-#endif
+#define IO_BUZZER_SET(x) LATAbits.LATA0 = (x);
 
 #define EEPROM_ADDR_ULIM_LO 0x10
 #define EEPROM_ADDR_ULIM_HI 0x11
