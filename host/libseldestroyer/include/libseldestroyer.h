@@ -30,6 +30,7 @@ typedef enum lsd_return_val_s {
     LSD_UNABLE_TO_CONNECT = 2,
     LSD_INVALID_ARGUMENT = 3,
     LSD_CONN_PROBLEM = 4,
+    LSD_CANT_UNDERSTAND = 5
 } lsd_return_val_t;
 
 typedef struct lsd_config_s {

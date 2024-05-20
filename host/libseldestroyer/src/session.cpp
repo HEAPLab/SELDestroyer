@@ -9,7 +9,7 @@ namespace libdestroyer {
     Session::Session() {
         // Set default parameters
         this->lls_params.device_name = "/dev/ttyUSB0";
-        this->lls_params.baudrate = 115200;
+        this->lls_params.baudrate = 57600;
         this->lls_params.number_bits = 8;
         this->lls_params.parity_on = false;
         this->lls_params.parity_is_odd = false;
