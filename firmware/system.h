@@ -19,8 +19,7 @@
 #define EEPROM_ADDR_ULIM_HI 0x11
 
 #define EEPROM_ADDR_TLIM_LO 0x15
-#define EEPROM_ADDR_TLIM_MI 0x16
-#define EEPROM_ADDR_TLIM_HI 0x17
+#define EEPROM_ADDR_TLIM_HI 0x16
 
 #define EEPROM_ADDR_AVG_MODE 0x1A
 
@@ -42,10 +41,6 @@ uint8_t EEPROM_read(uint8_t addr);
 
 void EEPROM_write(uint8_t addr, uint8_t data);
 
-
-void destroyer_save_I_lim(void);
-void destroyer_save_T_lim(void);
-void destroyer_save_AVG_mode(void);
-void destroyer_save_OUT_stat(void);
+#define system_get_time_point() (TMR0)
 
 #endif /* SYSTEM_H */

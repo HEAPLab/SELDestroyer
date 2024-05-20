@@ -11,7 +11,7 @@ Device -> Host
 - `$V,SXXXXX`: voltage reading, XXXXX in mV
 - `$I,SXXXXX`: current reading, XXXXX in mA
 - `$N,+XXX`: number of SELs detected
-- `$S,SXXXXX`: SEL detected (XXXXX = max current in mA)
+- `$S`: SEL detected (XXXXX = max current in mA)
 
 - `$CL,XXXXX`: current limiter set value, XXXXX in mA
 - `$CH,XXXXXX`: current limiter hold time value, XXXXXX in 100-us (i.e., XXXXXX=1

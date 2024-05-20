@@ -245,7 +245,10 @@ void display_update(void) {
     
     print_str(destroyer_data.dut_is_active ? " ON" : "OFF");
             
-
-    set_title(0);
+    if(destroyer_data.sel_to_manage) {
+        set_title(2);
+    } else {
+        set_title(destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO ? 1 : 0);
+    }
 
 }

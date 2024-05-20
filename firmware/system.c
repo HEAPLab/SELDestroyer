@@ -1,11 +1,22 @@
 #include "system.h"
 
+#include "destroyer.h"
 #include "protocol.h"
 
 void system_primary_init(void) {
     //  Let's wait for the oscillator
-    
+        
     while(OSCSTAT1bits.EXTOR == 0); // Wait for external oscillator
+
+    
+    // Start Timer 0 to keep track of timing
+    TMR0 = 0;   // Rollover every 0.008192 sec
+    T0CON1bits.T0CS = 0b010;    // FOsc/4 = 8 MHz
+    T0CON1bits.T0CKPS = 0b1010; // / 1024 = 7812.5 Hz - Rollover in ~ 8 secondi
+    // Resolution: 0000000..001 = 128 us
+    T0CON0bits.T016BIT = 1; // Enable 16 bit mode
+    T0CON0bits.T0EN = 1; // Enable timer
+
     
 }
 
@@ -48,7 +59,7 @@ void system_io_init(void) {
     TRISCbits.TRISC0 = 1;   // ### - I2C managed
     TRISCbits.TRISC1 = 1;   // ### - I2C managed
 
-    TRISCbits.TRISC2 = 1;   // Input - INA233_ALARMIN   // TODO: we need pull up?
+    TRISCbits.TRISC2 = 1;   // Input - INA233_ALARMIN
     TRISCbits.TRISC3 = 0;   // Output - LED status
     TRISCbits.TRISC4 = 1;   // ### - Serial managed
     TRISCbits.TRISC5 = 1;   // ### - Serial managed
@@ -65,11 +76,16 @@ void system_io_init(void) {
     SSP1DATPPS = 0b10001;
     RC1PPS = 0b11001;
     
+    // INT is RC2
+    INTPPS = 0b10010;
+    
     // TODO: lock PPS registers
 
     // Enable interrupts
     INTCONbits.PEIE = 1;
     INTCONbits.GIE  = 1;
+    INTCONbits.INTEDG = 0;  // Falling edge of INT pin
+    PIE0bits.INTE   = 1;    // Enable interrupt on INT pin
     
     // Init serial port
     serial_init();
@@ -77,6 +93,12 @@ void system_io_init(void) {
 }
 
 void __interrupt() ISR(void) {
+    
+    if(PIR0bits.INTF) {
+        destroyer_sel_occurred();
+        PIR0bits.INTF = 0;
+    }
+    
     if(PIR1bits.RCIF) {
         if(RC1STAbits.OERR) {
             // The only way to clear overflow error:

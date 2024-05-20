@@ -18,6 +18,7 @@ typedef enum protocol_state_e {
 
 static protocol_state_t prot_state=WAIT_BEGIN;
 
+static bool escaping_char = false;
 static char buffer_msg[10];
 static uint8_t buffer_msg_idx;
 
@@ -25,9 +26,18 @@ int16_t protocol_alert_SEL=2;   // 0 means no ALERT to send, otherwise max mA re
 
 void protocol_digest_char(char c) {
     
+    if(c == '\\') {
+        if(escaping_char) {
+            escaping_char = false;
+        } else {
+            escaping_char = true;
+            return;
+        }
+    }
+    
     switch(prot_state) {
         case WAIT_BEGIN:
-            if(c != SPECIAL_CHAR) {
+            if(c != SPECIAL_CHAR || escaping_char) {
                 return; // Discard value
             } else {
                 prot_state = WAIT_DATA;
@@ -35,7 +45,7 @@ void protocol_digest_char(char c) {
             }
         break;
         case WAIT_DATA:
-            if(c == '\n') {
+            if(c == '\n' && (!escaping_char)) {
                 prot_state = PROCESS_DATA;
                 return;
             } else if(buffer_msg_idx < 10) {
@@ -75,7 +85,7 @@ static char * i16_to_str(int16_t val, char *buf){
     return buf + i;
 }
 
-#define BUFF_SIZE 12
+#define BUFF_SIZE 16
 
 static void protocol_send_VIN(void) {
     extern ina233_res_t main_current_readings;
@@ -116,6 +126,30 @@ static void protocol_send_SEL(void) {
 
 }
 
+static char * u32_to_str(uint32_t val, char *buf){
+
+    uint8_t i = 10;
+    buf[i--] = '\0';
+    
+    do {
+        buf[i] = '0' + (val % 10);
+        i--;
+        val = val / 10;
+    } while (val > 0);
+    
+    return buf + i + 1;
+}
+
+static void destroyer_send_config(void) {
+    char buffer[BUFF_SIZE];
+
+    char *my_point = u32_to_str((uint16_t)destroyer_data.I_limit, buffer);
+    *(--my_point) = ',';
+    *(--my_point) = 'L';
+    *(--my_point) = 'C';
+    serial_send_cmd(my_point);
+}
+
 void protocol_update(void) {
 
     if(protocol_alert_SEL != 0) {
@@ -144,6 +178,9 @@ void protocol_update(void) {
             break;
             case 'R':
                 destroyer_clear_N_SELs();
+            break;
+            case '?':
+                destroyer_send_config();
             break;
             default:
                 prot_state = ERROR_STATE;

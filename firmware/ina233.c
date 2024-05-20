@@ -50,8 +50,8 @@ void ina233_init(void) {
     // And config the ADC
     const uint8_t register_and_data_2[3] = { 
         INA233_ADC_CONFIG,
-        0b00100111,
-        0b00001001
+        0b00000111,
+        0b00000000 // UUUU[AVG]
     };
 
     val = i2c_send(INA233_ADDRESS, register_and_data_2, 3);
