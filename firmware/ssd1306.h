@@ -11,7 +11,7 @@ void SSD1306_start_scroll_left(uint8_t start, uint8_t stop);
 void SSD1306_start_scroll_diag_right(uint8_t start, uint8_t stop);
 void SSD1306_start_scroll_diag_left(uint8_t start, uint8_t stop);
 void SSD1306_stop_scroll(void);
-void SSD1306_dim(char dim);
+void SSD1306_dim(uint8_t contrast);
 void SSD1306_set_text_wrap(char w);
 void SSD1306_invert_display(char i);
 void SSD1306_gotoXY(uint8_t x, uint8_t y);

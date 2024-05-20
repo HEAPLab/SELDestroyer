@@ -8,9 +8,14 @@
 
 #include "config.h"
 #include "system.h"
+#include "destroyer.h"
+#include "display.h"
 #include "i2c.h"
 #include "ssd1306.h"
 #include "ina233.h"
+#include "protocol.h"
+
+ina233_res_t main_current_readings;
 
 
 void main(void) {
@@ -35,69 +40,26 @@ void main(void) {
 
     ina233_init();
     
-//    ina233_res_t x = ina233_read();
-    
+    destroyer_init();
     SSD1306_init();
-    SSD1306_clear();
-    //SSD1306_fill_screen();
-    SSD1306_gotoXY(3,5);
-    SSD1306_putc('Z');
-    SSD1306_putc('a');
-    SSD1306_putc('n');
-    SSD1306_putc('e');
-    SSD1306_putc('l');
-    SSD1306_putc('l');
-    SSD1306_putc('a');
-    SSD1306_putc(' ');
-    SSD1306_putc('c');
-    SSD1306_putc('u');
-    SSD1306_putc('l');
-    SSD1306_putc('o');
-    //SSD1306_putc_custom("Ciao Jabina");
     
+    display_init_sequence();
+        
     while(1) {
-
+        display_update();
+        main_current_readings = ina233_read();
+        IO_LED_STATUS_SET(1);
+        __delay_ms(50);
+        IO_LED_STATUS_SET(0);
+        __delay_ms(50);
+        protocol_update();
     }
     
     return;
 }
 
-void __attribute__((noreturn)) throw_fatal_exception (fatal_exception_t error_code) {
-
-    uint8_t code = (uint8_t) error_code;
-    
-    bool state = false; // Pause or blink?
-    int8_t n = 0;
-    uint8_t bit_pos = 0;
-    const int8_t long_period = 10;
-    const int8_t short_period = 1;
-    const int8_t pause_period = 5;
-
-    IO_LED_STATUS_SET(0);
-
+void __attribute__((noreturn)) throw_fatal_exception (void) {
     while(1) {
         IO_LED_STATUS_SET(1);
-        __delay_ms(100);
-        IO_LED_STATUS_SET(0);
-        __delay_ms(100);            
-
-        n++;
-        if(state) {
-            if(n > (GET_BIT(code, bit_pos) == 0 ? short_period : long_period)) {
-                bit_pos = (bit_pos + 1) % 8;
-                if(bit_pos == 0) {
-                    n=-5*pause_period;
-                } else {
-                    n=0;
-                }
-                state = false;
-            }
-        } else {
-            if(n > pause_period) {
-                n=0;
-                state = true;
-            }
-        }
-        IO_LED_STATUS_SET(state);
     }
 }

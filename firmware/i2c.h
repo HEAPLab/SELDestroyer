@@ -32,4 +32,9 @@ bool i2c_recv(uint8_t address, uint8_t* data, uint8_t nr_bytes);
  */
 uint8_t i2c_send_recv(uint8_t address, const uint8_t* send_data, uint8_t send_nr_bytes, uint8_t* recv_data, uint8_t recv_nr_bytes);
 
+bool i2c_send_raw_byte(uint8_t data);
+
+void i2c_send_start(void);
+void i2c_send_stop(void);
+
 #endif /* I2C_H */
