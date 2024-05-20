@@ -18,4 +18,11 @@ void ina233_init(void);
 
 ina233_res_t ina233_read(void);
 
+void ina233_configure_mfr(uint16_t mfr_time_config);
+
+bool ina233_test(void);
+
+void ina233_oc_set_limit(uint16_t current_limit_mA);
+void ina233_oc_clear(void);
+
 #endif

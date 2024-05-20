@@ -10,6 +10,10 @@
 #define INA233_READ_VIN 0x88    // Retrieves the measurement for the VBUS voltage
 #define INA233_READ_IIN 0x89     // Retrieves the input current measurement
 
+#define INA233_OC_LIMIT 0x4A
+#define INA233_OC_CLEAR 0x03
+
+
 // Computation for the INA233
 // Max current: 10A
 // Current_LSB = (2^4)/(2^15) = 2^(-11)
@@ -60,6 +64,48 @@ void ina233_init(void) {
 
 #define REG2VAL(x) ((int16_t)((((uint16_t)x[1]) << 8) | x[0]))
 
+bool ina233_test(void) {
+
+    uint8_t readed[3];
+    uint8_t register_id = INA233_MFR_ID;
+    uint8_t stat = i2c_send_recv(INA233_ADDRESS, &register_id, 1, readed, 3);
+
+    if(stat==0) {
+        if(readed[0] == 2 && readed[1] == 0x54 && readed[2] == 0x49) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
+void ina233_oc_set_limit(uint16_t current_limit_mA) {
+    
+    uint8_t register_and_data[3];
+    
+    register_and_data[0] = INA233_OC_LIMIT;
+    
+    uint16_t value = current_limit_mA * 2048L / 1000L;
+
+    register_and_data[1] = value & 0xFF;
+    register_and_data[2] = (value & 0xFF00) >> 8;
+
+    bool val = i2c_send(INA233_ADDRESS, register_and_data, 3);
+    
+    if(!val) {
+        throw_fatal_exception();
+    }
+}
+
+void ina233_oc_clear(void) {
+    uint8_t byte = INA233_OC_CLEAR;
+    bool val = i2c_send(INA233_ADDRESS, &byte, 1);
+    
+    if(!val) {
+        throw_fatal_exception();
+    }
+
+}
 
 ina233_res_t ina233_read(void) {
     ina233_res_t to_ret;
@@ -81,10 +127,19 @@ ina233_res_t ina233_read(void) {
 
     if(status != 0) to_ret.valid = false;
     
-    to_ret.V = REG2VAL(readed_vin) * 10 / 8;
-    to_ret.I = REG2VAL(readed_iin) * 1000L / 2048L;
+    to_ret.V = REG2VAL(readed_vin) * 10L / 8L;
+    to_ret.I = -REG2VAL(readed_iin) * 1000L / 2048L;
 
     return to_ret;
 
 }
 
+void ina233_configure_mfr(uint16_t mfr_time_config) {
+    uint8_t register_and_data[3] = { 
+        INA233_ADC_CONFIG,
+        mfr_time_config & 0x00FF,
+        (mfr_time_config & 0xFF00) >> 8
+    };
+
+    i2c_send(INA233_ADDRESS, register_and_data, 3);
+}

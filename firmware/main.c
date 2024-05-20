@@ -42,6 +42,12 @@ void main(void) {
 
     ina233_init();
     
+    if(!ina233_test()) {
+        throw_fatal_exception();
+    }
+    
+    ina233_oc_set_limit(100);
+    
     destroyer_init();
     SSD1306_init();
     
