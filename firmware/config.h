@@ -7,7 +7,7 @@
 
 // CONFIG1
 #if USE_EXT_OSCILLATOR
-    #pragma config FEXTOSC = ECM    // FEXTOSC External Oscillator mode Selection bits (EC (external clock) for 100 kHz to 8 MHz)
+    #pragma config FEXTOSC = HS    // FEXTOSC External Oscillator mode Selection bits (EC (external clock) for 100 kHz to 8 MHz)
     #pragma config RSTOSC = EXT4X   // Power-up default value for COSC bits (EXTOSC with 4x PLL, with EXTOSC operating per FEXTOSC bits)
 #else
     #pragma config RSTOSC = HFINT32

@@ -9,7 +9,7 @@
 /* Constants and Macros                                                       */
 /* ****************************************************************************/
 
-#define USE_EXT_OSCILLATOR 0
+#define USE_EXT_OSCILLATOR 1
 
 #define GET_BIT(n, pos) ((n >> pos) & 0x01)
 
