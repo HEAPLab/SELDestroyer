@@ -23,6 +23,10 @@ public:
 
     void device_connect(std::string device_name);
 
+    readings_t device_get_readings() {
+        return this->protocol->get_VI();
+    }
+
 private:
     std::shared_ptr<Protocol> protocol;
     low_level_serial_params_t lls_params;

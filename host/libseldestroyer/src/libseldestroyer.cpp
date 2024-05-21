@@ -63,3 +63,17 @@ lsd_return_val_t lsd_connect(lsd_obj_t session, const char* device_name) {
 const char *lsd_get_error(lsd_obj_t session) {
     return SPTR_CONV(session)->last_error.c_str();
 }
+
+lsd_return_val_t lsd_get_readings(lsd_obj_t session, lsd_readings_t *out) {
+
+    libdestroyer::readings_t r;
+
+    EXCEPTION_PROTECT_START
+    r = SPTR_CONV(session)->device_get_readings();
+    EXCEPTION_PROTECT_END
+
+    out->V = r.V;
+    out->I = r.I;
+
+    return LSD_OK;
+}

@@ -15,7 +15,7 @@ public:
         : std::runtime_error(message), error_code(ec) {}
 
     explicit LSDException(lsd_return_val_t ec, const std::string &message)
-        : std::runtime_error(message), error_code(ec) {}
+        : std::runtime_error("ERROR: " + message), error_code(ec) {}
 
     virtual ~LSDException() noexcept = default;
 

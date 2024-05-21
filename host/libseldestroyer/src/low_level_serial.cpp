@@ -157,15 +157,11 @@ unsigned char LowLevelSerial::recv() {
     int count;
     char to_ret;
 
-    alarm(5);
-
     count = read(this->fd, &to_ret, 1);
 
     if(count <= 0) {
         throw LSDException(LSD_CONN_PROBLEM, std::string("read(1): ") + std::strerror(errno));
     }
-
-    alarm(0);
 
     return to_ret;
 }

@@ -41,6 +41,11 @@ typedef struct lsd_config_s {
     uint32_t sel_time_off_us;
 } lsd_config_t;
 
+typedef struct lsd_readings_s {
+    float V;
+    float I;
+} lsd_readings_t;
+
 typedef void * lsd_obj_t;
 
 lsd_obj_t lsd_init(void);
@@ -57,9 +62,7 @@ void lsd_set_config(lsd_obj_t session, const lsd_config_t *config);
 
 void lsd_get_config(lsd_obj_t session, lsd_config_t *config);
 
-float lsd_get_voltage(lsd_obj_t session);
-
-float lsd_get_current(lsd_obj_t session);
+lsd_return_val_t lsd_get_readings(lsd_obj_t session, lsd_readings_t *out);
 
 
 #ifdef __cplusplus
