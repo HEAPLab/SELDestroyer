@@ -25,7 +25,7 @@ add_library(seldestroyer SHARED
   ${FOOLIB_SOURCE_FILES}
 )
 
-target_compile_options(seldestroyer PRIVATE -Wall -Wextra -Wpedantic -Werror)
+target_compile_options(seldestroyer PRIVATE -Wall -Wextra -Wpedantic -Werror -g)
 
 install(TARGETS seldestroyer
         EXPORT seldestroyer-targets
