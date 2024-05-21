@@ -24,5 +24,6 @@ bool ina233_test(void);
 
 void ina233_oc_set_limit(uint16_t current_limit_mA);
 void ina233_oc_clear(void);
+void ina233_oc_disable(void);
 
 #endif

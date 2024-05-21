@@ -152,13 +152,33 @@ namespace libdestroyer {
         if(event_ack.wait_for(lk,std::chrono::seconds(2))==std::cv_status::timeout) {
             throw LSDException(LSD_CONN_PROBLEM, std::string("Missing ACK."));
         }
-
         lk.unlock();
-        (void) sel_hold_time_100us;
-        (void) config;
+
+        lls.send("CH," + std::to_string(sel_hold_time_100us));
+        lk.lock();
+        if(event_ack.wait_for(lk,std::chrono::seconds(2))==std::cv_status::timeout) {
+            throw LSDException(LSD_CONN_PROBLEM, std::string("Missing ACK."));
+        }
+        lk.unlock();
+
+        lls.send("CM," + std::to_string(config));
+        lk.lock();
+        if(event_ack.wait_for(lk,std::chrono::seconds(2))==std::cv_status::timeout) {
+            throw LSDException(LSD_CONN_PROBLEM, std::string("Missing ACK."));
+        }
+        lk.unlock();
+
     }
-    void Protocol::set_output(uint8_t output_status) {
-        (void) output_status;
+    void Protocol::set_output(char output_status) {
+        debug("Protocol", "Sending new output state...");
+
+        lls.send(std::string("CO,") + output_status);
+
+        std::unique_lock lk(this->data_mx);
+        if(event_ack.wait_for(lk,std::chrono::seconds(2))==std::cv_status::timeout) {
+            throw LSDException(LSD_CONN_PROBLEM, std::string("Missing ACK."));
+        }
+        lk.unlock();
     }
 
     void Protocol::run() {

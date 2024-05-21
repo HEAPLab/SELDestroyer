@@ -51,6 +51,7 @@ void main(void) {
     display_init_sequence();
         
     while(1) {
+
         main_current_readings = ina233_read();
 
         destroyer_update();

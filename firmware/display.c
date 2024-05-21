@@ -177,7 +177,7 @@ static void set_title(uint8_t title) {
     SSD1306_gotoXY(1,1);
 
     if (title == 0) {
-        print_str("     NOT LIMITING    ");    
+        print_str("!!   NOT LIMITING  !!");    
         SSD1306_gotoXY(1,2);
         print_str("                     ");                    
     } else if (title == 1) {
@@ -185,9 +185,13 @@ static void set_title(uint8_t title) {
         SSD1306_gotoXY(1,2);
         print_str("                     ");                    
     } else if (title == 2) {
-        print_str("#########SEL#########");                    
+        print_str("######## SEL ########");                    
         SSD1306_gotoXY(1,2);
-        print_str("#########   #########");                    
+        print_str("########     ########");                    
+    } else if (title == 3) {
+        print_str("         OFF         ");                    
+        SSD1306_gotoXY(1,2);
+        print_str("                     ");                    
     }
 
 }
@@ -239,16 +243,20 @@ void display_update(void) {
     print_str("Count:    ");
     print_str(str_buffer);
     
-    SSD1306_gotoXY(19,7);
-    print_str("DUT");
-    SSD1306_gotoXY(19,8);
+    SSD1306_gotoXY(18,7);
+    print_str(destroyer_data.dut_is_active ? "#DUT" : " DUT");
+    SSD1306_gotoXY(18,8);
     
-    print_str(destroyer_data.dut_is_active ? " ON" : "OFF");
+    print_str(destroyer_data.dut_is_active ? "# ON" : " OFF");
             
     if(destroyer_data.sel_to_manage) {
         set_title(2);
+    } else if (destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO) {
+        set_title(1);
+    } else if (destroyer_data.out_status == DESTROYER_OUT_STATUS_OFF) {
+        set_title(3);        
     } else {
-        set_title(destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO ? 1 : 0);
+        set_title(0);
     }
 
 }

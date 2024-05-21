@@ -6,6 +6,7 @@
 
 destroyer_data_t destroyer_data;
 
+static uint16_t sel_time_point;
 
 void destroyer_save_I_lim(void) {
     EEPROM_write(EEPROM_ADDR_ULIM_HI, ((uint16_t)destroyer_data.I_limit) >> 8);
@@ -14,7 +15,7 @@ void destroyer_save_I_lim(void) {
 
 void destroyer_save_T_lim(void) {
     EEPROM_write(EEPROM_ADDR_ULIM_HI, (uint8_t)(destroyer_data.T_hold_us >> 8));
-    EEPROM_write(EEPROM_ADDR_ULIM_LO, (uint8_t)(destroyer_data.T_hold_us & 0xFF));
+    EEPROM_write(EEPROM_ADDR_ULIM_LO, (uint8_t)(destroyer_data.T_hold_us & 0xFF));    
 }
 
 void destroyer_save_AVG_mode(void) {
@@ -67,8 +68,12 @@ void destroyer_clear_N_SELs(void) {
 
 void destroyer_sel_occurred(void) {
     
+    if(destroyer_data.out_status != 0xAA) {
+        return;
+    }
+ 
     //ina233_res_t x = ina233_read();
-    
+    sel_time_point = system_get_time_point();
     destroyer_data.count++;
     destroyer_data.sel_to_manage = true;
     IO_LED_STATUS_SET(1);
@@ -76,12 +81,44 @@ void destroyer_sel_occurred(void) {
 }
 
 void destroyer_update(void) {
-    if(destroyer_data.sel_to_manage) {
+    static bool waiting_hold_time = false;
 
-        destroyer_data.sel_to_manage = false;
+    if(destroyer_data.sel_to_manage) {
+        if(waiting_hold_time) {
+            if(system_get_time_point() - sel_time_point > destroyer_data.T_hold_tick) {
+                waiting_hold_time = false;
+                destroyer_data.sel_to_manage = false;
+                ina233_oc_clear();
+                IO_LED_STATUS_SET(0);
+            }
+        } else {
+            waiting_hold_time = true;
+        }
     }
+    
+    // Updated for dut_is_active
+    if(destroyer_data.out_status == 0xEE) {
+        destroyer_data.dut_is_active = true;
+    } else if (destroyer_data.out_status == 0xAA) {
+        destroyer_data.dut_is_active = !destroyer_data.sel_to_manage;
+    } else {
+        destroyer_data.dut_is_active = false;
+    }
+
+    // Update the actual PIN
+    IO_OUTPUT_DIS_SET(!destroyer_data.dut_is_active);
 }
 
 void destroyer_apply_config(void) {
-    ina233_oc_set_limit(destroyer_data.I_limit);
+
+    if(destroyer_data.out_status == 0xAA) {
+        ina233_oc_clear();
+        ina233_oc_set_limit(destroyer_data.I_limit);
+    } else {
+        ina233_oc_disable();
+    }
+
+    destroyer_data.T_hold_tick = (destroyer_data.T_hold_us*100UL/128UL);
+
+    
 }

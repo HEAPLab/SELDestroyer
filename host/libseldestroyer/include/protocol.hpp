@@ -29,7 +29,7 @@ public:
     void get_config(float *sel_curr_max_mA, uint16_t *sel_hold_time_100us, uint16_t *config, char* output_status);
 
     void set_config(float sel_curr_max_mA, uint16_t sel_hold_time_100us, uint16_t config);
-    void set_output(uint8_t output_status);
+    void set_output(char output_status);
 
 
     void reset_N_SEL();

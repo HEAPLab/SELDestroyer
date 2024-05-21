@@ -10,7 +10,7 @@ void system_primary_init(void) {
 
     
     // Start Timer 0 to keep track of timing
-    TMR0 = 0;   // Rollover every 0.008192 sec
+    TMR0H = TMR0L = 0;   // Rollover every 0.008192 sec
     T0CON1bits.T0CS = 0b010;    // FOsc/4 = 8 MHz
     T0CON1bits.T0CKPS = 0b1010; // / 1024 = 7812.5 Hz - Rollover in ~ 8 secondi
     // Resolution: 0000000..001 = 128 us

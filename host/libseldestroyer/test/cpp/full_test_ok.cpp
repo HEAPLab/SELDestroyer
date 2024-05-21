@@ -59,6 +59,7 @@ int main() {
     std::cout << "config.output_status=" << config.output_status << std::endl;
 
     config.sel_curr_max_A = 2;
+    config.output_status = LSD_OUTPUT_STATUS_OFF;
 
     val = lsd_set_config(lobj, &config);
 

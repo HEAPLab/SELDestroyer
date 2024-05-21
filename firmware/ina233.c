@@ -12,6 +12,7 @@
 
 #define INA233_OC_LIMIT 0x4A
 #define INA233_OC_CLEAR 0x03
+#define INA233_MFR_ALERT_MASK 0xD2
 
 
 // Computation for the INA233
@@ -85,7 +86,7 @@ void ina233_oc_set_limit(uint16_t current_limit_mA) {
     
     register_and_data[0] = INA233_OC_LIMIT;
     
-    uint16_t value = current_limit_mA * 2048L / 1000L;
+    uint16_t value = ((uint16_t) ((uint32_t)current_limit_mA) * ((uint32_t)2048) / ((uint32_t)1000));
 
     register_and_data[1] = value & 0xFF;
     register_and_data[2] = (value & 0xFF00) >> 8;
@@ -95,6 +96,27 @@ void ina233_oc_set_limit(uint16_t current_limit_mA) {
     if(!val) {
         throw_fatal_exception();
     }
+
+    register_and_data[0] = INA233_MFR_ALERT_MASK;
+    register_and_data[1] = 0b11111011;
+    val = i2c_send(INA233_ADDRESS, register_and_data, 2);
+    
+    if(!val) {
+        throw_fatal_exception();
+    }
+    
+}
+
+void ina233_oc_disable(void) {
+    uint8_t register_and_data[2];
+    register_and_data[0] = INA233_MFR_ALERT_MASK;
+    register_and_data[1] = 0b11111111;
+    bool val = i2c_send(INA233_ADDRESS, register_and_data, 2);
+    
+    if(!val) {
+        throw_fatal_exception();
+    }
+
 }
 
 void ina233_oc_clear(void) {

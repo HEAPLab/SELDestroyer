@@ -42,6 +42,6 @@ uint8_t EEPROM_read(uint8_t addr);
 
 void EEPROM_write(uint8_t addr, uint8_t data);
 
-#define system_get_time_point() (TMR0)
+#define system_get_time_point() ((((uint16_t)TMR0H)<<8U) | TMR0L) 
 
 #endif /* SYSTEM_H */
