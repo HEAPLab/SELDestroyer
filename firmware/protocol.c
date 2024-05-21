@@ -46,6 +46,7 @@ void protocol_digest_char(char c) {
         break;
         case WAIT_DATA:
             if(c == '\n' && (!escaping_char)) {
+                buffer_msg[buffer_msg_idx] = '\n';
                 prot_state = PROCESS_DATA;
                 return;
             } else if(buffer_msg_idx < 10) {
@@ -136,6 +137,18 @@ static char * u16_to_str(uint16_t val, char *buf){
     return buf + i + 1;
 }
 
+
+static uint16_t str_to_u16(const char * s){
+    uint16_t res = 0;
+    while(*s != '\n') {
+        res = (res * 10) + (*s - '0');
+        s++;
+    }
+    return res;
+}
+
+
+
 static void destroyer_send_config(void) {
     char buffer[BUFF_SIZE];
 
@@ -166,6 +179,57 @@ static void destroyer_send_config(void) {
     
 }
 
+static void protocol_send_done(void) {
+    serial_send_cmd("*");
+}
+
+static void protocol_update_config(void) {
+    if(buffer_msg_idx <= 3) {
+        prot_state = ERROR_STATE;
+        return; // Empty command?
+    }
+    
+    const char *start_point = buffer_msg + 3;
+    
+    switch(buffer_msg[1]) {
+        case 'L':
+            destroyer_data.I_limit = str_to_u16(start_point);
+            destroyer_apply_config();
+            destroyer_save_I_lim();
+            protocol_send_done();
+        break;
+        case 'H':
+            destroyer_data.T_hold_us = str_to_u16(start_point);
+            destroyer_save_T_lim();
+            protocol_send_done();
+        break;
+        case 'M':
+            destroyer_data.avg_mode = str_to_u16(start_point);
+            destroyer_apply_config();
+            destroyer_save_AVG_mode();
+            protocol_send_done();
+        break;
+        case 'O':
+            if(*start_point == '0') {
+                destroyer_data.out_status = 0x00;
+            } else if(*start_point == '1') {
+                destroyer_data.out_status = 0xEE;                
+            } else if(*start_point == 'A') {
+                destroyer_data.out_status = 0xAA;
+            } else {
+                prot_state = ERROR_STATE;
+                return;
+            }
+            destroyer_apply_config();
+            destroyer_save_OUT_stat();
+            protocol_send_done();
+        break;
+        default:
+            prot_state = ERROR_STATE;
+        break;
+    }
+}
+
 void protocol_update(void) {
 
     if(protocol_alert_SEL) {
@@ -194,9 +258,13 @@ void protocol_update(void) {
             break;
             case 'R':
                 destroyer_clear_N_SELs();
+                protocol_send_done();
             break;
             case '?':
                 destroyer_send_config();
+            break;
+            case 'C':
+                protocol_update_config();
             break;
             default:
                 prot_state = ERROR_STATE;

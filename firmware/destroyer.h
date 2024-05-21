@@ -9,7 +9,7 @@ typedef struct destroyer_data_s {
     int16_t count;
     bool dut_is_active; // Actual current value
     bool sel_to_manage;
-    uint16_t avg_mode;   // See INA233 datasheet, only 3 bit significative
+    uint16_t avg_mode;   // 0bAAABBBCCC - AAA: current conv time, BBB: voltage conv time, CCC: avg mode - See INA233 datasheet
     uint8_t out_status; // 0x00 - Always OFF, 0xEE - always ON, 0xAA - auto
     uint16_t T_hold_us; // in 100 us // SMMMU 6.5535
 
