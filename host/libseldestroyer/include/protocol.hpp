@@ -25,6 +25,14 @@ public:
     void init();
 
     readings_t get_VI();
+    unsigned int get_N_SEL();
+    void get_config(float *sel_curr_max_mA, uint16_t *sel_hold_time_100us, uint16_t *config, char* output_status);
+
+    void set_config(float sel_curr_max_mA, uint16_t sel_hold_time_100us, uint16_t config);
+    void set_output(uint8_t output_status);
+
+
+    void reset_N_SEL();
 
 private:
     LowLevelSerial lls;
@@ -41,6 +49,16 @@ private:
     std::optional<float> last_V, last_I;
     std::condition_variable event_VI;
 
+    std::optional<unsigned int> N_SEL_detected;
+    std::condition_variable event_N_SEL;
+
+    std::optional<unsigned short> config_current_limit;
+    std::optional<unsigned short> config_hold_time;
+    std::optional<unsigned short> config_average_mode;
+    std::optional<char> config_output_status;
+    std::condition_variable event_config;
+
+    std::condition_variable event_ack;
 
     void run();
 

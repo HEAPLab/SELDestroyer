@@ -77,3 +77,96 @@ lsd_return_val_t lsd_get_readings(lsd_obj_t session, lsd_readings_t *out) {
 
     return LSD_OK;
 }
+
+
+lsd_return_val_t lsd_get_SEL_count(lsd_obj_t session, unsigned int *out) {
+
+    unsigned int r;
+
+    EXCEPTION_PROTECT_START
+    r = SPTR_CONV(session)->device_get_SEL_count();
+    EXCEPTION_PROTECT_END
+
+    *out = r;
+
+    return LSD_OK;
+}
+
+lsd_return_val_t lsd_reset_SEL_count(lsd_obj_t session) {
+
+    EXCEPTION_PROTECT_START
+    SPTR_CONV(session)->device_reset_SEL_count();
+    EXCEPTION_PROTECT_END
+
+    return LSD_OK;
+}
+
+
+lsd_return_val_t lsd_get_config(lsd_obj_t session, lsd_config_t *config) {
+
+    uint16_t sel_hold_time_100us;
+    uint16_t adc_config;
+    char output_status;
+
+    EXCEPTION_PROTECT_START
+
+    SPTR_CONV(session)->get_config(&(config->sel_curr_max_A), &sel_hold_time_100us, &adc_config, &output_status);
+
+    EXCEPTION_PROTECT_END
+
+    config->sel_hold_time_us = sel_hold_time_100us * 100;
+
+    config->avg_num = static_cast<lsd_avg_t>(adc_config & 0b111);
+    config->voltage_conv_time = static_cast<lsd_conv_t>((adc_config & 0b111000) >> 3);
+    config->current_conv_time = static_cast<lsd_conv_t>((adc_config & 0b111000000) >> 6);
+
+    switch(output_status) {
+    case '0':
+        config->output_status = LSD_OUTPUT_STATUS_OFF;
+    break;
+    case '1':
+        config->output_status = LSD_OUTPUT_STATUS_ON;
+    break;
+    case 'A':
+        config->output_status = LSD_OUTPUT_STATUS_AUTO;
+    break;
+    default:
+        config->output_status = LSD_OUTPUT_STATUS_INVALID;
+    break;
+    }
+
+
+    return LSD_OK;
+}
+
+
+lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
+
+    uint16_t sel_hold_time_100us;
+    uint16_t adc_config;
+    char output_status;
+
+    sel_hold_time_100us = config->sel_hold_time_us / 100;
+    adc_config = (config->avg_num & 0b111) | (config->voltage_conv_time & 0b111 << 3) | (config->current_conv_time & 0b111 << 6);
+
+    switch(config->output_status) {
+    case LSD_OUTPUT_STATUS_OFF:
+    default:
+        output_status = '0';
+    break;
+    case LSD_OUTPUT_STATUS_ON:
+        output_status = '1';
+    break;
+    case LSD_OUTPUT_STATUS_AUTO:
+        output_status = 'A';
+    break;
+    }
+
+    EXCEPTION_PROTECT_START
+
+    SPTR_CONV(session)->set_config(config->sel_curr_max_A, sel_hold_time_100us, adc_config, output_status);
+
+    EXCEPTION_PROTECT_END
+
+    return LSD_OK;
+}

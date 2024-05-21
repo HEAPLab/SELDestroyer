@@ -2,6 +2,7 @@
 
 #include "test.hpp"
 
+#include <thread>
 
 int main() {
 
@@ -15,15 +16,55 @@ int main() {
 
     ASSERT_EQ(val,LSD_OK);
 
-    for(int i=0; i<10; i++) {
-        lsd_readings_t r;
+    // V/I
 
-        val = lsd_get_readings(lobj, &r);
+    lsd_readings_t r;
 
-        ASSERT_EQ(val,LSD_OK);
+    val = lsd_get_readings(lobj, &r);
 
-        std::cout << "V=" << r.V << "\tI=" << r.I << std::endl;
-    }
+    ASSERT_EQ(val,LSD_OK);
+
+    std::cout << "V=" << r.V << "\tI=" << r.I << std::endl;
+
+    // SEL COUNT
+
+    unsigned int N;
+    val = lsd_get_SEL_count(lobj, &N);
+
+    ASSERT_EQ(val,LSD_OK);
+
+    std::cout << "N SEL=" << N << std::endl;
+
+    val = lsd_reset_SEL_count(lobj);
+
+    ASSERT_EQ(val,LSD_OK);
+
+    val = lsd_get_readings(lobj, &r);
+
+    ASSERT_EQ(val,LSD_OK);
+
+    std::cout << "V=" << r.V << "\tI=" << r.I << std::endl;
+
+
+    lsd_config_t config;
+    val = lsd_get_config(lobj, &config);
+
+    ASSERT_EQ(val,LSD_OK);
+
+    std::cout << "config.sel_curr_max_mA=" << config.sel_curr_max_A << std::endl;
+    std::cout << "config.sel_hold_time_us=" << config.sel_hold_time_us << std::endl;
+    std::cout << "config.avg_num=" << config.avg_num << std::endl;
+    std::cout << "config.voltage_conv_time=" << config.voltage_conv_time << std::endl;
+    std::cout << "config.current_conv_time=" << config.current_conv_time << std::endl;
+    std::cout << "config.output_status=" << config.output_status << std::endl;
+
+    config.sel_curr_max_A = 2;
+
+    val = lsd_set_config(lobj, &config);
+
+    ASSERT_EQ(val,LSD_OK);
+
+
 
     return 0;
 }

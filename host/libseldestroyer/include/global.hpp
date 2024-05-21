@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <stdexcept>
 #include <string>
+#include <mutex>
 
 class LSDException: public std::runtime_error
 {
@@ -31,6 +32,8 @@ inline void debug(const std::string & sec, const std::string &msg) {
     extern bool overall_debug_enabled;
 
     if(overall_debug_enabled) {
+        static std::mutex mx;
+        std::lock_guard lk(mx);
         std::cerr << '[' << std::setw(10) << sec  << "] " << msg << std::endl;
     }
 }

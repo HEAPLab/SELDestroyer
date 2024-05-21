@@ -24,7 +24,7 @@
 extern "C" {
 #endif
 
-typedef enum lsd_return_val_s {
+typedef enum lsd_return_val_e {
     LSD_OK = 0,
     LSD_GENERIC_ERROR = 1,
     LSD_UNABLE_TO_CONNECT = 2,
@@ -33,12 +33,44 @@ typedef enum lsd_return_val_s {
     LSD_CANT_UNDERSTAND = 5
 } lsd_return_val_t;
 
-typedef struct lsd_config_s {
-    uint8_t  adc_avg_config;
+typedef enum lsd_avg_e {
+    LSD_AVG_1    = 0,
+    LSD_AVG_4    = 1,
+    LSD_AVG_16   = 2,
+    LSD_AVG_64   = 3,
+    LSD_AVG_128  = 4,
+    LSD_AVG_256  = 5,
+    LSD_AVG_512  = 6,
+    LSD_AVG_1024 = 7
+} lsd_avg_t;
 
-    bool     sel_destroyer_enable;
-    uint16_t sel_curr_max_mA;
-    uint32_t sel_time_off_us;
+typedef enum lsd_conv_e {
+    LSD_CT_140_US  = 0,
+    LSD_CT_204_US  = 1,
+    LSD_CT_332_US  = 2,
+    LSD_CT_588_US  = 3,
+    LSD_CT_1100_US = 4,
+    LSD_CT_2116_US = 5,
+    LSD_CT_4156_US = 6,
+    LSD_CT_8244_US = 7
+} lsd_conv_t;
+
+typedef enum lsd_output_status_e {
+    LSD_OUTPUT_STATUS_OFF   = 0,
+    LSD_OUTPUT_STATUS_ON    = 1,
+    LSD_OUTPUT_STATUS_AUTO  = 2,
+    LSD_OUTPUT_STATUS_INVALID = 3
+} lsd_output_status_t;
+
+typedef struct lsd_config_s {
+    float sel_curr_max_A;
+    uint32_t sel_hold_time_us;  // Precision 128 us
+
+    lsd_avg_t avg_num;
+    lsd_conv_t voltage_conv_time;
+    lsd_conv_t current_conv_time;
+    lsd_output_status_t output_status;
+
 } lsd_config_t;
 
 typedef struct lsd_readings_s {
@@ -58,11 +90,13 @@ const char *lsd_get_error(lsd_obj_t session);
 
 lsd_return_val_t lsd_connect(lsd_obj_t session, const char* device_name);
 
-void lsd_set_config(lsd_obj_t session, const lsd_config_t *config);
+lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config);
 
-void lsd_get_config(lsd_obj_t session, lsd_config_t *config);
+lsd_return_val_t lsd_get_config(lsd_obj_t session, lsd_config_t *config);
 
 lsd_return_val_t lsd_get_readings(lsd_obj_t session, lsd_readings_t *out);
+lsd_return_val_t lsd_get_SEL_count(lsd_obj_t session, unsigned int *out);
+lsd_return_val_t lsd_reset_SEL_count(lsd_obj_t session);
 
 
 #ifdef __cplusplus

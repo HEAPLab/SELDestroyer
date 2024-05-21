@@ -6,6 +6,7 @@
 #include <fcntl.h>      // File control definitions
 #include <cerrno>
 #include <cstring>
+#include <mutex>
 #include <termios.h>    // POSIX terminal control definitions
 
 #define SPECIAL_CHAR '$'
@@ -123,6 +124,9 @@ void LowLevelSerial::reset_trasmission() {
 }
 
 void LowLevelSerial::send(const std::string &data) {
+
+    static std::mutex send_mx;
+    std::lock_guard lk(send_mx);
 
     char nl=SPECIAL_CHAR;
     int count = write(this->fd, &nl, 1);
