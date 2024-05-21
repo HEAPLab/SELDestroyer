@@ -22,7 +22,7 @@ static bool escaping_char = false;
 static char buffer_msg[10];
 static uint8_t buffer_msg_idx;
 
-int16_t protocol_alert_SEL=2;   // 0 means no ALERT to send, otherwise max mA reached
+bool protocol_alert_SEL=false;
 
 void protocol_digest_char(char c) {
     
@@ -117,16 +117,12 @@ static void protocol_send_N_SELs(void) {
 }
 
 static void protocol_send_SEL(void) {
-    char buffer[BUFF_SIZE];
 
-    char *my_point = i16_to_str(protocol_alert_SEL, buffer);
-    *(--my_point) = ',';
-    *(--my_point) = 'S';
-    serial_send_cmd(my_point);
+    serial_send_cmd("S");
 
 }
 
-static char * u32_to_str(uint32_t val, char *buf){
+static char * u16_to_str(uint16_t val, char *buf){
 
     uint8_t i = 10;
     buf[i--] = '\0';
@@ -143,20 +139,40 @@ static char * u32_to_str(uint32_t val, char *buf){
 static void destroyer_send_config(void) {
     char buffer[BUFF_SIZE];
 
-    char *my_point = u32_to_str((uint16_t)destroyer_data.I_limit, buffer);
+    char *my_point = u16_to_str((uint16_t)destroyer_data.I_limit, buffer);
     *(--my_point) = ',';
     *(--my_point) = 'L';
     *(--my_point) = 'C';
     serial_send_cmd(my_point);
+    
+    my_point = u16_to_str((uint16_t)destroyer_data.T_hold_us, buffer);
+    *(--my_point) = ',';
+    *(--my_point) = 'H';
+    *(--my_point) = 'C';
+    serial_send_cmd(my_point);
+
+    my_point = u16_to_str((uint16_t)destroyer_data.avg_mode, buffer);
+    *(--my_point) = ',';
+    *(--my_point) = 'M';
+    *(--my_point) = 'C';
+    serial_send_cmd(my_point);
+    
+    buffer[0] = 'C';
+    buffer[1] = 'O';
+    buffer[2] = ',';
+    buffer[3] = destroyer_data.out_status == 0x00 ? '0' : (destroyer_data.out_status == 0xEE ? '1' : 'A');
+    buffer[4] = '\0';
+    serial_send_cmd(buffer);
+    
 }
 
 void protocol_update(void) {
 
-    if(protocol_alert_SEL != 0) {
+    if(protocol_alert_SEL) {
         // SEL alert needs to be sent, this has the precedence
         // to any other message
         protocol_send_SEL();
-        protocol_alert_SEL = 0;
+        protocol_alert_SEL = false;
         return;
     }
     

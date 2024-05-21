@@ -17,7 +17,6 @@ void system_primary_init(void) {
     T0CON0bits.T016BIT = 1; // Enable 16 bit mode
     T0CON0bits.T0EN = 1; // Enable timer
 
-    
 }
 
 static void serial_init(void) {

@@ -210,7 +210,7 @@ void display_update(void) {
     
     if (destroyer_data.I_limit > 0) {
        int32_t perc = main_current_readings.I;
-       perc = perc * 100 / destroyer_data.I_limit;
+       perc = (perc < 0 ? -perc : perc) * 100 / destroyer_data.I_limit;
        u82buffer_pad((uint8_t)perc);
        print_str("  ");
        print_str(str_buffer);
@@ -220,7 +220,7 @@ void display_update(void) {
     SSD1306_gotoXY(1,5);
     
     
-    fixed2buffer(destroyer_data.I_limit);
+    fixed2buffer((int16_t)destroyer_data.I_limit);
 
     print_str("Ilim:");
     print_str(str_buffer);

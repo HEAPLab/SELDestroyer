@@ -2,6 +2,7 @@
 
 #include "system.h"
 #include "ina233.h"
+#include "protocol.h"
 
 destroyer_data_t destroyer_data;
 
@@ -17,7 +18,8 @@ void destroyer_save_T_lim(void) {
 }
 
 void destroyer_save_AVG_mode(void) {
-    EEPROM_write(EEPROM_ADDR_AVG_MODE, destroyer_data.avg_mode);
+    EEPROM_write(EEPROM_ADDR_AVG_MODE_HI, (uint8_t)(destroyer_data.avg_mode >> 8));
+    EEPROM_write(EEPROM_ADDR_AVG_MODE_LO, (uint8_t)(destroyer_data.avg_mode & 0xFF));
 }
 
 void destroyer_save_OUT_stat(void) {
@@ -28,9 +30,9 @@ void destroyer_save_OUT_stat(void) {
 void destroyer_init(void) {
     //
     destroyer_data.sel_to_manage = false;
-    destroyer_data.I_limit = EEPROM_read(EEPROM_ADDR_ULIM_HI) << 8 | EEPROM_read(EEPROM_ADDR_ULIM_LO);
-    destroyer_data.T_hold_us = EEPROM_read(EEPROM_ADDR_TLIM_HI) << 8 | EEPROM_read(EEPROM_ADDR_TLIM_LO);
-    destroyer_data.avg_mode = EEPROM_read(EEPROM_ADDR_AVG_MODE);
+    destroyer_data.I_limit = (uint16_t)(EEPROM_read(EEPROM_ADDR_ULIM_HI) << 8U | EEPROM_read(EEPROM_ADDR_ULIM_LO));
+    destroyer_data.T_hold_us = (uint16_t)(EEPROM_read(EEPROM_ADDR_TLIM_HI) << 8 | EEPROM_read(EEPROM_ADDR_TLIM_LO));
+    destroyer_data.avg_mode = (uint16_t)(EEPROM_read(EEPROM_ADDR_AVG_MODE_HI) << 8 | EEPROM_read(EEPROM_ADDR_AVG_MODE_LO));
     destroyer_data.out_status = EEPROM_read(EEPROM_ADDR_OUT_STAT);
     destroyer_data.count = 0;
     destroyer_data.dut_is_active = destroyer_data.out_status == 0xEE ? 1 : 0;
@@ -70,11 +72,11 @@ void destroyer_sel_occurred(void) {
     destroyer_data.count++;
     destroyer_data.sel_to_manage = true;
     IO_LED_STATUS_SET(1);
+    protocol_alert_SEL = true;
 }
 
 void destroyer_update(void) {
     if(destroyer_data.sel_to_manage) {
-        serial_send_cmd("S");
 
         destroyer_data.sel_to_manage = false;
     }
