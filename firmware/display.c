@@ -45,22 +45,22 @@ static void u162buffer_pad(uint16_t value) {
     str_buffer[5] = '\0';
     str_buffer[4] = '0' + value % 10;
     value = value / 10;
-    str_buffer[3] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[3] = value == 0 ? ' ' : '0' + (value % 10);
     value = value / 10;
-    str_buffer[2] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[2] = value == 0 ? ' ' : '0' + (value % 10);
     value = value / 10;
-    str_buffer[1] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[1] = value == 0 ? ' ' : '0' + (value % 10);
     value = value / 10;
-    str_buffer[0] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[0] = value == 0 ? ' ' : '0' + (value % 10);
 }
 
 static void u82buffer_pad(uint8_t value) {
     str_buffer[3] = '\0';
     str_buffer[2] = '0' + value % 10;
     value = value / 10;
-    str_buffer[1] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[1] = value == 0 ? ' ' : '0' + (value % 10);
     value = value / 10;
-    str_buffer[0] = (value % 10) > 0 ? '0' + (value % 10) : ' ';
+    str_buffer[0] = value == 0 ? ' ' : '0' + (value % 10);
 }
 
 #if 0
@@ -115,6 +115,34 @@ static void print_str(const char* str) {
     }
 }
 
+
+static void display_static_part_init(void) {
+    SSD1306_gotoXY(1,3);
+    print_str("V:           V");
+    
+    SSD1306_gotoXY(1,4);
+    print_str("I:           A");
+
+    SSD1306_gotoXY(21,4);
+    print_str("%");
+
+    
+    SSD1306_gotoXY(1,5);
+    print_str("Ilim:        A");
+
+    SSD1306_gotoXY(1,6);
+    print_str("P:           W");
+
+    SSD1306_gotoXY(1,8);
+    print_str("Count:  ");
+
+    SSD1306_gotoXY(19,7);
+    print_str("DUT");
+
+    
+}
+
+
 void display_init_sequence(void) {
 
     SSD1306_set_text_wrap(false);
@@ -122,6 +150,7 @@ void display_init_sequence(void) {
     SSD1306_clear();
 
 #if DISABLE_SPLASH
+    display_static_part_init();
     return;
 #endif
     
@@ -170,7 +199,7 @@ void display_init_sequence(void) {
     }
     
     SSD1306_clear();
-
+    display_static_part_init();
 }
 
 static void set_title(uint8_t title) {
@@ -196,59 +225,44 @@ static void set_title(uint8_t title) {
 
 }
 
+void display_set_frozen(void) {
+    SSD1306_gotoXY(5,3);
+    SSD1306_putc_stretch('S', 2);
+    SSD1306_putc_stretch('C', 2);
+    SSD1306_putc_stretch('R', 2);
+    SSD1306_putc_stretch('E', 2);
+    SSD1306_putc_stretch('E', 2);
+    SSD1306_putc_stretch('N', 2);
+
+    SSD1306_gotoXY(5,5);
+    SSD1306_putc_stretch('F', 2);
+    SSD1306_putc_stretch('R', 2);
+    SSD1306_putc_stretch('O', 2);
+    SSD1306_putc_stretch('Z', 2);
+    SSD1306_putc_stretch('E', 2);
+    SSD1306_putc_stretch('N', 2);
+}
+
 void display_update(void) {
-
     extern ina233_res_t main_current_readings;
-    
-    SSD1306_gotoXY(1,3);
-    fixed2buffer(main_current_readings.V);
-    
-    print_str("V:   ");
-    print_str(str_buffer);
-    print_str("  V");
-    SSD1306_gotoXY(1,4);
-    fixed2buffer(main_current_readings.I);
-    print_str("I:   ");
-    print_str(str_buffer);
-    print_str("  A");
-    
-    if (destroyer_data.I_limit > 0) {
-       int32_t perc = main_current_readings.I;
-       perc = (perc < 0 ? -perc : perc) * 100 / destroyer_data.I_limit;
-       u82buffer_pad((uint8_t)perc);
-       print_str("  ");
-       print_str(str_buffer);
-    print_str("%");
+    static bool is_frozen = false;
+        
+    if(destroyer_data.out_status == 0xAA && destroyer_data.T_hold_us < 2000) {
+        if (!is_frozen) {
+            SSD1306_clear();
+            display_set_frozen();
+            is_frozen = true;
+            return;
+        }
+        return;
+    } else {
+        if(is_frozen) {
+            is_frozen = false;
+            SSD1306_clear();
+            display_static_part_init();
+        }
     }
-
-    SSD1306_gotoXY(1,5);
     
-    
-    fixed2buffer((int16_t)destroyer_data.I_limit);
-
-    print_str("Ilim:");
-    print_str(str_buffer);
-    print_str("  A");
-
-    SSD1306_gotoXY(1,6);
-
-    fixed2buffer((int16_t)(((int32_t)main_current_readings.V) * main_current_readings.I / 1000));
-    print_str("P:   ");
-    print_str(str_buffer);
-    print_str("  W");
-
-
-    SSD1306_gotoXY(1,8);
-    u162buffer_pad((uint16_t)destroyer_data.count);
-    print_str("Count:    ");
-    print_str(str_buffer);
-    
-    SSD1306_gotoXY(18,7);
-    print_str(destroyer_data.dut_is_active ? "#DUT" : " DUT");
-    SSD1306_gotoXY(18,8);
-    
-    print_str(destroyer_data.dut_is_active ? "# ON" : " OFF");
-            
     if(destroyer_data.sel_to_manage) {
         set_title(2);
     } else if (destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO) {
@@ -258,5 +272,41 @@ void display_update(void) {
     } else {
         set_title(0);
     }
+    
+    SSD1306_gotoXY(6,3);
+    fixed2buffer(main_current_readings.V);    
+    print_str(str_buffer);
+
+    SSD1306_gotoXY(6,4);
+    fixed2buffer(main_current_readings.I);
+    print_str(str_buffer);
+    
+    if (destroyer_data.I_limit > 0) {
+        SSD1306_gotoXY(18,4);
+       int32_t perc = main_current_readings.I;
+       perc = (perc < 0 ? -perc : perc) * 100 / destroyer_data.I_limit;
+       u82buffer_pad((uint8_t)perc);
+       print_str(str_buffer);
+    }
+
+    SSD1306_gotoXY(6,5);
+    
+    
+    fixed2buffer((int16_t)destroyer_data.I_limit);
+    print_str(str_buffer);
+
+    SSD1306_gotoXY(8,6);
+
+    fixed2buffer((int16_t)(((int32_t)main_current_readings.V) * main_current_readings.I / 1000));
+    print_str(str_buffer);
+
+
+    SSD1306_gotoXY(8,8);
+    u162buffer_pad((uint16_t)destroyer_data.count);
+    print_str(str_buffer);
+    
+    SSD1306_gotoXY(18,8);
+    
+    print_str(destroyer_data.dut_is_active ? "# ON" : " OFF");
 
 }

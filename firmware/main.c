@@ -52,8 +52,10 @@ void main(void) {
         
     while(1) {
 
-        main_current_readings = ina233_read();
-
+        if(destroyer_data.out_status != 0xAA || destroyer_data.T_hold_us >= 20) {
+            main_current_readings = ina233_read();
+        }
+        
         destroyer_update();
         display_update();
         protocol_update();

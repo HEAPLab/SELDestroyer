@@ -16,7 +16,13 @@ void system_primary_init(void) {
     // Resolution: 0000000..001 = 128 us
     T0CON0bits.T016BIT = 1; // Enable 16 bit mode
     T0CON0bits.T0EN = 1; // Enable timer
-
+    
+    // Prepare TImer2, we use it to trigger the interrupt
+    // to check whether Timer1 has expired (SEL reset)
+    TMR2 = 0;
+    T2CONbits.T2CKPS = 0b11;
+    PR2  = 12; // ~ 96 us
+    PIE1bits.TMR2IE = 1;    // Enable interrupt
 }
 
 static void serial_init(void) {
@@ -92,6 +98,12 @@ void system_io_init(void) {
 }
 
 void __interrupt() ISR(void) {
+    
+    if(PIR1bits.TMR2IF) {
+        destroyer_check_sel_end();
+        TMR2 = 0;
+        PIR1bits.TMR2IF = 0;
+    }
     
     if(PIR0bits.INTF) {
         destroyer_sel_occurred();

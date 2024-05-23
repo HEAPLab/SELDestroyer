@@ -235,6 +235,8 @@ void protocol_update(void) {
     if(protocol_alert_SEL) {
         // SEL alert needs to be sent, this has the precedence
         // to any other message
+        // TODO: Optimize: use a non-blocking function here to send the char
+        // (if we lost it who cares, but we need to be fast if the flag is true)
         protocol_send_SEL();
         protocol_alert_SEL = false;
         return;

@@ -15,8 +15,8 @@
 
 #define SET_BIT(n, pos, val) n = (n & ~((unsigned)1 << pos)) | ((unsigned)val << pos);
 
-#define INTERRUPTS_DISABLE() asm volatile ("di")
-#define INTERRUPTS_ENABLE()  asm volatile ("ei")
+#define INTERRUPTS_DISABLE() INTCONbits.GIE = 0;
+#define INTERRUPTS_ENABLE()  INTCONbits.GIE = 1;
 
 extern void __attribute__((noreturn)) throw_fatal_exception(void);
 

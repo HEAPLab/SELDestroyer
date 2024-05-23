@@ -43,5 +43,8 @@ uint8_t EEPROM_read(uint8_t addr);
 void EEPROM_write(uint8_t addr, uint8_t data);
 
 #define system_get_time_point() ((((uint16_t)TMR0H)<<8U) | TMR0L) 
+#define system_start_timer2() { TMR2 = 0; T2CONbits.TMR2ON = 1; }
+#define system_stop_timer2() { T2CONbits.TMR2ON = 0; }
+
 
 #endif /* SYSTEM_H */

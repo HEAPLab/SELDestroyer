@@ -3,6 +3,7 @@
 #include "system.h"
 #include "ina233.h"
 #include "protocol.h"
+#include "global.h"
 
 destroyer_data_t destroyer_data;
 
@@ -67,46 +68,98 @@ void destroyer_clear_N_SELs(void) {
 }
 
 void destroyer_sel_occurred(void) {
+    // Interrupt routine
     
     if(destroyer_data.out_status != 0xAA) {
         return;
     }
- 
-    //ina233_res_t x = ina233_read();
+    
     sel_time_point = system_get_time_point();
     destroyer_data.count++;
     destroyer_data.sel_to_manage = true;
     IO_LED_STATUS_SET(1);
     protocol_alert_SEL = true;
+    system_start_timer2();
 }
 
-void destroyer_update(void) {
-    static bool waiting_hold_time = false;
+void destroyer_check_sel_end(void) {
+    // Called when timer2 expires
+    
+    if(system_get_time_point() - sel_time_point > (destroyer_data.T_hold_tick-1)) {
+        system_stop_timer2();
+        destroyer_data.hold_timer_expired = true;
+        IO_LED_STATUS_SET(0);
+    }
+}
 
-    if(destroyer_data.sel_to_manage) {
-        if(waiting_hold_time) {
-            if(system_get_time_point() - sel_time_point > destroyer_data.T_hold_tick) {
-                waiting_hold_time = false;
-                destroyer_data.sel_to_manage = false;
-                ina233_oc_clear();
-                IO_LED_STATUS_SET(0);
-            }
-        } else {
-            waiting_hold_time = true;
+typedef enum state_machine_e {
+    INIT,
+    MAN_ALWAYS_ON,
+    MAN_ALWAYS_OFF,
+    AUTO_READY,
+    AUTO_HOLD,
+    AUTO_HOLD_CLEARED
+} state_machine_t;
+
+static state_machine_t destroyer_fsm_state = INIT;
+
+static void destroyer_update_fsm(void) {
+   
+    state_machine_t next_state = destroyer_fsm_state;
+
+    // Cases valid for any state:
+    if(destroyer_data.out_status == 0xEE) {
+        next_state = MAN_ALWAYS_ON;
+    }
+    
+    if(destroyer_data.out_status == 0x00) {
+        next_state = MAN_ALWAYS_OFF;
+    }
+    
+    // State-specific cases:
+    if(destroyer_fsm_state == AUTO_READY) {
+        if(destroyer_data.sel_to_manage) {
+            destroyer_data.sel_to_manage = false;
+            next_state = AUTO_HOLD;
+        }
+    }
+    else if(destroyer_fsm_state == AUTO_HOLD) {
+        next_state = AUTO_HOLD_CLEARED;
+    }
+    else if(destroyer_fsm_state == AUTO_HOLD_CLEARED) {
+        if(destroyer_data.hold_timer_expired) {
+            destroyer_data.hold_timer_expired = false;
+            next_state = AUTO_READY;
+        }
+    }
+
+    else {
+        if(destroyer_data.out_status == 0xAA) {
+            next_state = AUTO_READY;
         }
     }
     
-    // Updated for dut_is_active
-    if(destroyer_data.out_status == 0xEE) {
-        destroyer_data.dut_is_active = true;
-    } else if (destroyer_data.out_status == 0xAA) {
-        destroyer_data.dut_is_active = !destroyer_data.sel_to_manage;
-    } else {
-        destroyer_data.dut_is_active = false;
-    }
+    destroyer_fsm_state = next_state;
+}
 
-    // Update the actual PIN
-    IO_OUTPUT_DIS_SET(!destroyer_data.dut_is_active);
+static void destroyer_update_outputs(void) {
+
+    destroyer_data.dut_is_active = destroyer_fsm_state == MAN_ALWAYS_OFF
+                                || destroyer_fsm_state == AUTO_READY;
+    
+    IO_OUTPUT_DIS_SET(destroyer_fsm_state == MAN_ALWAYS_OFF);
+    
+    if(destroyer_fsm_state == AUTO_HOLD) {
+        ina233_oc_clear();
+    } 
+    
+}
+
+void destroyer_update(void) {
+    
+    destroyer_update_fsm();
+    destroyer_update_outputs();
+
 }
 
 void destroyer_apply_config(void) {
