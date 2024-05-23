@@ -32,11 +32,13 @@ public:
 
     std::string recv_line();
 
+    void close_fd();
 
 private:
     const low_level_serial_params_t & serial_params;
 
     int fd;
+    int fd_event;
 
 };
 

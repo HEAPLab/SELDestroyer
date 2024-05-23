@@ -8,6 +8,8 @@
 #include <cstring>
 #include <mutex>
 #include <termios.h>    // POSIX terminal control definitions
+#include <sys/poll.h>
+#include <sys/eventfd.h>
 
 #define SPECIAL_CHAR '$'
 #define ESCAPE_CHAR '\\'
@@ -34,6 +36,7 @@ default: return 0;
 LowLevelSerial::LowLevelSerial(const low_level_serial_params_t &params) 
 : serial_params(params) {
     this->fd = -1;
+    this->fd_event = eventfd(0, 0);
 }
 
 LowLevelSerial::~LowLevelSerial() {
@@ -157,9 +160,31 @@ void LowLevelSerial::send(const std::string &data) {
     
 }
 
+void LowLevelSerial::close_fd() {
+    debug("LLS", "Closing file descriptor...");
+    eventfd_write(this->fd_event, 1);
+    close(this->fd);
+}
+
+
 unsigned char LowLevelSerial::recv() {
     int count;
     char to_ret;
+
+    struct pollfd fds[2];
+    fds[0].fd = this->fd;
+    fds[0].events = POLLIN;
+    fds[1].fd = this->fd_event;
+    fds[1].events = POLLIN;
+
+    if(poll(fds,2,-1) < 0) {
+        throw LSDException(LSD_CONN_PROBLEM, std::string("poll(1): ") + std::strerror(errno));
+    }
+
+    if(fds[1].revents & POLLIN) {
+        debug("LLS", "Closing event notified.");
+        return '\n';
+    }
 
     count = read(this->fd, &to_ret, 1);
 

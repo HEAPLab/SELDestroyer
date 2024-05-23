@@ -6,6 +6,16 @@
 
 namespace libdestroyer {
 
+    Protocol::~Protocol() {
+
+        lls.close_fd();
+        if(this->thread.joinable()) {
+            debug("Protocol", "Waiting for receiver thread to close...");
+            this->thread.join();
+        }
+        debug("Protocol", "Done, bye bye.");
+    }
+
     void Protocol::init() {
 
         debug("Protocol", "Initialization...");
@@ -184,56 +194,63 @@ namespace libdestroyer {
     void Protocol::run() {
         debug("Protocol", "Starting receiver thread...");
 
-        while(true) {
-            std::string line = lls.recv_line();
+        try {
 
-            if(line == "$P") {
-                std::lock_guard lk(this->data_mx);
-                event_pong_bool = true;
-                event_pong_cv.notify_all();
-            } else if(line == "$S") {
-                std::lock_guard lk(this->data_mx);
-                event_sel_bool = true;
-                event_sel_cv.notify_all();
-            } else if(line.rfind("$V,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->last_V = std::stoi(line.substr(3))/1000.;
-                event_VI.notify_all();
-            } else if(line.rfind("$I,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->last_I = std::stoi(line.substr(3))/1000.;
-                event_VI.notify_all();
-            } else if(line.rfind("$N,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->N_SEL_detected = std::stoi(line.substr(3));
-                event_N_SEL.notify_all();
-            } else if(line.rfind("$*", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                event_ack.notify_all();
-            } else if(line.rfind("$CL,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->config_current_limit = std::stoi(line.substr(4));
-                event_config.notify_all();
-            } else if(line.rfind("$CH,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->config_hold_time = std::stoi(line.substr(4));
-                event_config.notify_all();
-            } else if(line.rfind("$CM,", 0) == 0) {
-                std::lock_guard lk(this->data_mx);
-                this->config_average_mode = std::stoi(line.substr(4));
-                event_config.notify_all();
-            } else if(line.rfind("$CO,", 0) == 0 && line.length() > 4) {
-                std::lock_guard lk(this->data_mx);
-                this->config_output_status = line[4];
-                event_config.notify_all();
-            } else if(line == "$E") {
-                // Protocol error occurred on the device side, just log and ignore it.
-                debug("Protocol", "Received error message, ignoring...");
-            }
-            else {
-                throw LSDException(LSD_CANT_UNDERSTAND, std::string("Unkonwn value: ") + line);
-            }
+            while(true) {
+                std::string line = lls.recv_line();
 
+                if(line.size() == 0) return;
+
+                if(line == "$P") {
+                    std::lock_guard lk(this->data_mx);
+                    event_pong_bool = true;
+                    event_pong_cv.notify_all();
+                } else if(line == "$S") {
+                    std::lock_guard lk(this->data_mx);
+                    event_sel_bool = true;
+                    event_sel_cv.notify_all();
+                } else if(line.rfind("$V,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->last_V = std::stoi(line.substr(3))/1000.;
+                    event_VI.notify_all();
+                } else if(line.rfind("$I,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->last_I = std::stoi(line.substr(3))/1000.;
+                    event_VI.notify_all();
+                } else if(line.rfind("$N,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->N_SEL_detected = std::stoi(line.substr(3));
+                    event_N_SEL.notify_all();
+                } else if(line.rfind("$*", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    event_ack.notify_all();
+                } else if(line.rfind("$CL,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->config_current_limit = std::stoi(line.substr(4));
+                    event_config.notify_all();
+                } else if(line.rfind("$CH,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->config_hold_time = std::stoi(line.substr(4));
+                    event_config.notify_all();
+                } else if(line.rfind("$CM,", 0) == 0) {
+                    std::lock_guard lk(this->data_mx);
+                    this->config_average_mode = std::stoi(line.substr(4));
+                    event_config.notify_all();
+                } else if(line.rfind("$CO,", 0) == 0 && line.length() > 4) {
+                    std::lock_guard lk(this->data_mx);
+                    this->config_output_status = line[4];
+                    event_config.notify_all();
+                } else if(line == "$E") {
+                    // Protocol error occurred on the device side, just log and ignore it.
+                    debug("Protocol", "Received error message, ignoring...");
+                }
+                else {
+                    throw LSDException(LSD_CANT_UNDERSTAND, std::string("Unkonwn value: ") + line);
+                }
+            }
+        }
+        catch(const LSDException &lsde) {
+            debug("LSDException: ", lsde.what());
         }
     }
 

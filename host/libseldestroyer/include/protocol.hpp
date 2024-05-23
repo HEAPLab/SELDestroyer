@@ -22,6 +22,8 @@ public:
     lls(lls_params), event_pong_bool(false) {
     }
 
+    ~Protocol();
+
     void init();
 
     readings_t get_VI();
