@@ -122,9 +122,9 @@ lsd_return_val_t lsd_get_config(lsd_obj_t session, lsd_config_t *config) {
 
     config->sel_hold_time_us = sel_hold_time_100us * 100;
 
-    config->avg_num = static_cast<lsd_avg_t>(adc_config & 0b111);
+    config->current_conv_time = static_cast<lsd_conv_t>(adc_config & 0b111);
     config->voltage_conv_time = static_cast<lsd_conv_t>((adc_config & 0b111000) >> 3);
-    config->current_conv_time = static_cast<lsd_conv_t>((adc_config & 0b111000000) >> 6);
+    config->avg_num = static_cast<lsd_avg_t>((adc_config & 0b111000000) >> 6);
 
     switch(output_status) {
     case '0':
@@ -164,7 +164,7 @@ lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
     char output_status;
 
     sel_hold_time_100us = config->sel_hold_time_us / 100;
-    adc_config = (config->avg_num & 0b111) | ((config->voltage_conv_time & 0b111) << 3) | ((config->current_conv_time & 0b111) << 6);
+    adc_config = (config->current_conv_time & 0b111) | ((config->voltage_conv_time & 0b111) << 3) | ((config->avg_num & 0b111) << 6);
 
     output_status = outputstatus2char(config->output_status);
 

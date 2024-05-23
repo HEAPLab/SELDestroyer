@@ -170,6 +170,8 @@ void destroyer_apply_config(void) {
     } else {
         ina233_oc_disable();
     }
+    
+    ina233_configure_mfr(destroyer_data.avg_mode << 3 | 0b111);
 
     destroyer_data.T_hold_tick = (destroyer_data.T_hold_us*100UL/128UL);
 
