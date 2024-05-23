@@ -3,8 +3,9 @@
 
 #include "protocol.hpp"
 
-#include <string>
+#include <functional>
 #include <memory>
+#include <string>
 
 namespace libdestroyer {
 
@@ -46,6 +47,14 @@ public:
 
     void set_output(char output_status) {
         this->protocol->set_output(output_status);
+    }
+
+    void set_sel_callback(std::function<void(void)> fun) {
+        this->protocol->set_sel_callback(std::move(fun));
+    }
+
+    void wait_finish(void) {
+        this->protocol->wait_finish();
     }
 
 private:

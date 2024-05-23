@@ -206,9 +206,9 @@ namespace libdestroyer {
                     event_pong_bool = true;
                     event_pong_cv.notify_all();
                 } else if(line == "$S") {
-                    std::lock_guard lk(this->data_mx);
-                    event_sel_bool = true;
-                    event_sel_cv.notify_all();
+                    if(this->sel_callback) {
+                        this->sel_callback();
+                    }
                 } else if(line.rfind("$V,", 0) == 0) {
                     std::lock_guard lk(this->data_mx);
                     this->last_V = std::stoi(line.substr(3))/1000.;

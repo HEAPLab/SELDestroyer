@@ -25,6 +25,7 @@ Options::Options(int argc, const char* argv[]) {
         ("config_avg_nr", po::value<unsigned int>(), "Set the configuratoin for number of averages. See documentation for possible values.")
         ("config_ct_V", po::value<unsigned int>(), "Set the configuratoin for conversion time Voltage. See documentation for possible values.")
         ("config_ct_I", po::value<unsigned int>(), "Set the configuratoin for conversion time Current. See documentation for possible values.")
+        ("monitor", "Monitor SEL occurrences")
         ("version", "Print version information")
         ("help", "Print this help message")
     ;
@@ -57,6 +58,9 @@ Options::Options(int argc, const char* argv[]) {
     this->arg_getSEL = vm.count("getSEL");
     this->arg_resetSEL = vm.count("resetSEL");
     this->arg_getCONFIG = vm.count("getCONFIG");
+
+    this->arg_monitorSEL = vm.count("monitor");
+
 
     if(vm.count("output")) {
         switch(vm["output"].as<char>()) {

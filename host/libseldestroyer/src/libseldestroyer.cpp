@@ -189,3 +189,11 @@ lsd_return_val_t lsd_set_output(lsd_obj_t session, lsd_output_status_t output_st
     return LSD_OK;
 
 }
+
+void lsd_register_sel_callback(lsd_obj_t session, void (*callback)(void)) {
+    SPTR_CONV(session)->set_sel_callback(callback);
+}
+
+void lsd_wait(lsd_obj_t session) {
+    SPTR_CONV(session)->wait_finish();
+}

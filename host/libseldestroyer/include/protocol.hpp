@@ -4,9 +4,11 @@
 #include "low_level_serial.hpp"
 
 #include <condition_variable>
+#include <functional>
 #include <mutex>
 #include <thread>
 #include <optional>
+
 
 namespace libdestroyer {
 
@@ -36,17 +38,24 @@ public:
 
     void reset_N_SEL();
 
+    void set_sel_callback(std::function<void(void)> &&fun) {
+        this->sel_callback = std::move(fun);
+    }
+
+    void wait_finish() {
+        this->thread.join();
+    }
+
 private:
     LowLevelSerial lls;
     std::thread thread;
+
+    std::function<void(void)> sel_callback;
 
     std::mutex data_mx;
 
     bool event_pong_bool;
     std::condition_variable event_pong_cv;
-
-    bool event_sel_bool;
-    std::condition_variable event_sel_cv;
 
     std::optional<float> last_V, last_I;
     std::condition_variable event_VI;

@@ -2,6 +2,7 @@
 
 #include "options.hpp"
 
+#include <chrono>
 #include <memory>
 #include <iostream>
 
@@ -91,6 +92,20 @@ void perform_set_config(std::optional<float> arg_max_I, std::optional<unsigned i
     std::cout << "Config setting updated." << std::endl;
 }
 
+extern "C" void go_monitor_sel_cb(void) {
+    auto msUNIX = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+
+    std::cout << "SEL at=" << msUNIX/1000 << '.' << msUNIX%1000 << std::endl;
+}
+
+void go_monitor_sel() {
+
+    lsd_register_sel_callback(lobj, go_monitor_sel_cb);
+
+    lsd_wait(lobj);
+
+}
+
 int main(int argc, const char* argv[]) {
 
     try {
@@ -115,6 +130,8 @@ int main(int argc, const char* argv[]) {
         ) {
             perform_set_config(opt.arg_max_I, opt.arg_hold_time, opt.arg_avg_num, opt.arg_voltage_conv_time, opt.arg_current_conv_time);
         }
+
+        if(opt.arg_monitorSEL) go_monitor_sel();
 
         lsd_close(lobj);
         

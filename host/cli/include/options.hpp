@@ -23,6 +23,9 @@ namespace seldestroyer {
         std::optional<lsd_conv_t> arg_voltage_conv_time;
         std::optional<lsd_conv_t> arg_current_conv_time;
 
+        bool arg_monitorSEL;
+
+
         std::string arg_device;
     };
 }

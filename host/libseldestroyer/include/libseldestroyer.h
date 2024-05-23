@@ -101,6 +101,10 @@ lsd_return_val_t lsd_set_output(lsd_obj_t session, lsd_output_status_t output_st
 
 const char* lsd_get_version(void);
 
+void lsd_register_sel_callback(lsd_obj_t session, void (*)(void));
+
+void lsd_wait(lsd_obj_t session);
+
 #ifdef __cplusplus
 }
 #endif
