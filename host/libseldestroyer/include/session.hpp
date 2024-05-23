@@ -38,8 +38,13 @@ public:
     void get_config(float *sel_curr_max_mA, uint16_t *sel_hold_time_100us, uint16_t *config, char *output_status) {
         this->protocol->get_config(sel_curr_max_mA, sel_hold_time_100us, config, output_status);
     }
+
     void set_config(float sel_curr_max_mA, uint16_t sel_hold_time_100us, uint16_t config, char output_status) {
         this->protocol->set_config(sel_curr_max_mA, sel_hold_time_100us, config);
+        this->protocol->set_output(output_status);
+    }
+
+    void set_output(char output_status) {
         this->protocol->set_output(output_status);
     }
 

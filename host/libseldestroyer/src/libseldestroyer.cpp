@@ -139,6 +139,17 @@ lsd_return_val_t lsd_get_config(lsd_obj_t session, lsd_config_t *config) {
     return LSD_OK;
 }
 
+static char outputstatus2char(lsd_output_status_t output_state) {
+    switch(output_state) {
+    case LSD_OUTPUT_STATUS_OFF:
+    default:
+        return '0';
+    case LSD_OUTPUT_STATUS_ON:
+        return '1';
+    case LSD_OUTPUT_STATUS_AUTO:
+        return 'A';
+    }
+}
 
 lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
 
@@ -149,18 +160,7 @@ lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
     sel_hold_time_100us = config->sel_hold_time_us / 100;
     adc_config = (config->avg_num & 0b111) | (config->voltage_conv_time & 0b111 << 3) | (config->current_conv_time & 0b111 << 6);
 
-    switch(config->output_status) {
-    case LSD_OUTPUT_STATUS_OFF:
-    default:
-        output_status = '0';
-    break;
-    case LSD_OUTPUT_STATUS_ON:
-        output_status = '1';
-    break;
-    case LSD_OUTPUT_STATUS_AUTO:
-        output_status = 'A';
-    break;
-    }
+    output_status = outputstatus2char(config->output_status);
 
     EXCEPTION_PROTECT_START
 
@@ -169,4 +169,17 @@ lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
     EXCEPTION_PROTECT_END
 
     return LSD_OK;
+}
+
+lsd_return_val_t lsd_set_output(lsd_obj_t session, lsd_output_status_t output_state) {
+    char char_os = outputstatus2char(output_state);
+
+    EXCEPTION_PROTECT_START
+
+    SPTR_CONV(session)->set_output(char_os);
+
+    EXCEPTION_PROTECT_END
+
+    return LSD_OK;
+
 }
