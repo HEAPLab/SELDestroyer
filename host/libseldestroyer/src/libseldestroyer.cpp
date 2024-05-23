@@ -18,6 +18,8 @@
 #include "session.hpp"
 #include "global.hpp"
 
+#include "version.h"
+
 #include <string>
 
 #define SPTR_CONV(x) ((libdestroyer::Session*)x)
@@ -35,6 +37,10 @@
                         SPTR_CONV(session)->last_error = "Unknown error.";\
                         return LSD_GENERIC_ERROR;\
                     }
+
+const char* lsd_get_version(void) {
+    return LIBSELDESTROYER_VERSION;
+}
 
 lsd_obj_t lsd_init(void) {
     return new (std::nothrow) libdestroyer::Session;
@@ -158,7 +164,7 @@ lsd_return_val_t lsd_set_config(lsd_obj_t session, const lsd_config_t *config) {
     char output_status;
 
     sel_hold_time_100us = config->sel_hold_time_us / 100;
-    adc_config = (config->avg_num & 0b111) | (config->voltage_conv_time & 0b111 << 3) | (config->current_conv_time & 0b111 << 6);
+    adc_config = (config->avg_num & 0b111) | ((config->voltage_conv_time & 0b111) << 3) | ((config->current_conv_time & 0b111) << 6);
 
     output_status = outputstatus2char(config->output_status);
 

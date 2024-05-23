@@ -99,6 +99,8 @@ lsd_return_val_t lsd_get_SEL_count(lsd_obj_t session, unsigned int *out);
 lsd_return_val_t lsd_reset_SEL_count(lsd_obj_t session);
 lsd_return_val_t lsd_set_output(lsd_obj_t session, lsd_output_status_t output_state);
 
+const char* lsd_get_version(void);
+
 #ifdef __cplusplus
 }
 #endif
