@@ -59,6 +59,8 @@ void main(void) {
         destroyer_update();
         display_update();
         protocol_update();
+        
+        CLRWDT();
     }
     
     return;
