@@ -15,8 +15,8 @@ void destroyer_save_I_lim(void) {
 }
 
 void destroyer_save_T_lim(void) {
-    EEPROM_write(EEPROM_ADDR_ULIM_HI, (uint8_t)(destroyer_data.T_hold_us >> 8));
-    EEPROM_write(EEPROM_ADDR_ULIM_LO, (uint8_t)(destroyer_data.T_hold_us & 0xFF));    
+    EEPROM_write(EEPROM_ADDR_TLIM_HI, (uint8_t)(destroyer_data.T_hold_us >> 8));
+    EEPROM_write(EEPROM_ADDR_TLIM_LO, (uint8_t)(destroyer_data.T_hold_us & 0xFF));    
 }
 
 void destroyer_save_AVG_mode(void) {
@@ -37,7 +37,7 @@ void destroyer_init(void) {
     destroyer_data.avg_mode = (uint16_t)(EEPROM_read(EEPROM_ADDR_AVG_MODE_HI) << 8 | EEPROM_read(EEPROM_ADDR_AVG_MODE_LO));
     destroyer_data.out_status = EEPROM_read(EEPROM_ADDR_OUT_STAT);
     destroyer_data.count = 0;
-    destroyer_data.dut_is_active = destroyer_data.out_status == 0xEE ? 1 : 0;
+    destroyer_data.dut_is_active = destroyer_data.out_status == DESTROYER_OUT_STATUS_ON ? 1 : 0;
     
     // Safe checks
     if (destroyer_data.I_limit == 0 || destroyer_data.I_limit == 0xFFFF) {
@@ -59,7 +59,7 @@ void destroyer_init(void) {
         destroyer_data.out_status = 0;    // Always OFF
         destroyer_save_OUT_stat();
     }
-    
+        
     destroyer_apply_config();
 }
 
@@ -70,7 +70,7 @@ void destroyer_clear_N_SELs(void) {
 void destroyer_sel_occurred(void) {
     // Interrupt routine
     
-    if(destroyer_data.out_status != 0xAA) {
+    if(destroyer_data.out_status != DESTROYER_OUT_STATUS_AUTO) {
         return;
     }
     
@@ -108,11 +108,11 @@ static void destroyer_update_fsm(void) {
     state_machine_t next_state = destroyer_fsm_state;
 
     // Cases valid for any state:
-    if(destroyer_data.out_status == 0xEE) {
+    if(destroyer_data.out_status == DESTROYER_OUT_STATUS_ON) {
         next_state = MAN_ALWAYS_ON;
     }
     
-    if(destroyer_data.out_status == 0x00) {
+    if(destroyer_data.out_status == DESTROYER_OUT_STATUS_OFF) {
         next_state = MAN_ALWAYS_OFF;
     }
     
@@ -134,7 +134,7 @@ static void destroyer_update_fsm(void) {
     }
 
     else {
-        if(destroyer_data.out_status == 0xAA) {
+        if(destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO) {
             next_state = AUTO_READY;
         }
     }
@@ -144,7 +144,7 @@ static void destroyer_update_fsm(void) {
 
 static void destroyer_update_outputs(void) {
 
-    destroyer_data.dut_is_active = destroyer_fsm_state == MAN_ALWAYS_OFF
+    destroyer_data.dut_is_active = destroyer_fsm_state == MAN_ALWAYS_ON
                                 || destroyer_fsm_state == AUTO_READY;
     
     IO_OUTPUT_DIS_SET(destroyer_fsm_state == MAN_ALWAYS_OFF);
@@ -164,7 +164,7 @@ void destroyer_update(void) {
 
 void destroyer_apply_config(void) {
 
-    if(destroyer_data.out_status == 0xAA) {
+    if(destroyer_data.out_status == DESTROYER_OUT_STATUS_AUTO) {
         ina233_oc_clear();
         ina233_oc_set_limit(destroyer_data.I_limit);
     } else {

@@ -193,10 +193,17 @@ static void protocol_update_config(void) {
     
     switch(buffer_msg[1]) {
         case 'L':
+        {
+            uint16_t value = str_to_u16(start_point);
+            if(value > 10000) {
+                prot_state = ERROR_STATE;
+                return;
+            }
             destroyer_data.I_limit = str_to_u16(start_point);
             destroyer_apply_config();
             destroyer_save_I_lim();
             protocol_send_done();
+        }
         break;
         case 'H':
             destroyer_data.T_hold_us = str_to_u16(start_point);
@@ -204,10 +211,17 @@ static void protocol_update_config(void) {
             protocol_send_done();
         break;
         case 'M':
-            destroyer_data.avg_mode = str_to_u16(start_point);
+        {
+            uint16_t value = str_to_u16(start_point);
+            if(value > 0b111111111) {
+                prot_state = ERROR_STATE;
+                return;
+            }
+            destroyer_data.avg_mode = value;
             destroyer_apply_config();
             destroyer_save_AVG_mode();
             protocol_send_done();
+        }
         break;
         case 'O':
             if(*start_point == '0') {

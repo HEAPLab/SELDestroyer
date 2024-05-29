@@ -7,7 +7,7 @@
 #include "ina233.h"
 #include "destroyer.h"
 
-#define DISABLE_SPLASH 1
+#define DISABLE_SPLASH 0
 
 char str_buffer[10];
 

@@ -158,7 +158,7 @@ void EEPROM_write(uint8_t addr, uint8_t data) {
     NVMCON1bits.WR = 1;
     INTCONbits.GIE = 1; // Re-enable interrupts
 
-    NVMCON1bits.WREN = 0;   // Disable WRITE mode (it's safe)
+    NVMCON1bits.WREN = 0;   // Disable WRITE mode (it's safe to do it here)
 
     while(NVMCON1bits.WR);  // Wait completion
 
